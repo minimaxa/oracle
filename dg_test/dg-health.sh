@@ -1,18 +1,18 @@
 #!/bin/ksh
- ###        NAME
- ###       check_dataguard.sh v1.0
- ###
- ###    DESCRIPTION
- ###       Checks the physical standby database and the dgbroker configuration.
- ###
- ###    RETURNS
- ###      0 - OK
- ###      1 - Incorrect
- ###    NOTES
- ###
- ###    MODIFIED           (DD/MM/YY)
- ###       Oracle           10/11/2010     - Creation
- ###
+###        NAME
+###       check_dataguard.sh v1.0
+##
+###    DESCRIPTION
+###       Checks the physical standby database and the dgbroker configuration.
+###
+###    RETURNS
+###      0 - OK
+###      1 - Incorrect
+###    NOTES
+###
+###    MODIFIED           (DD/MM/YY)
+###       Oracle           10/11/2010     - Creation
+###
  
 V_DATE=`/bin/date +%Y%m%d_%H%M%S`
  if [ "${1}" != 'no_trace' ]; then
