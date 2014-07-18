@@ -1,3 +1,4 @@
+-- Flashback ¼³Á¤
 shutdown immediate
 startup mount
 alter database flashback on;
