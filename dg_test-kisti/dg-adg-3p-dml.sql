@@ -1,3 +1,0 @@
-@@dml-tab
-@@qry-tab
-

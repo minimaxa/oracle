@@ -1,9 +1,0 @@
-# rman target sys/welcome1@kis051 auxiliary / @dup_backupset.rman
-run {
-allocate channel disk1 device type disk;
-allocate auxiliary channel disk2 device type disk;
-duplicate target database for standby nofilenamecheck;
-release channel disk1;
-release channel disk2;
-}
-

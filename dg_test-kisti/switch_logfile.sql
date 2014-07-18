@@ -1,1 +1,0 @@
-alter system switch logfile;
