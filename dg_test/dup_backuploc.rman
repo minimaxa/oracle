@@ -1,0 +1,11 @@
+# rman auxiliary / @dup_backuploc.rman 
+run { 
+allocate auxiliary channel disk1 device type disk;
+allocate auxiliary channel disk2 device type disk;
+duplicate target database for standby 
+backup location '/arman/rman/KIS05/'
+nofilenamecheck dorecover;
+release channel disk1;
+release channel disk2;
+}
+
