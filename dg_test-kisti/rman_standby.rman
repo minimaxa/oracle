@@ -1,0 +1,11 @@
+# rman target / @rman_standby.rman
+run {
+allocate channel disk1 type disk;
+allocate channel disk2 type disk;
+backup as compressed backupset database format '/arman/rman/KIS05/standby_%U.bck' 
+include current controlfile for standby
+plus archivelog format '/arman/rman/KIS05/standby_archive_%U' tag 'standby';
+release channel disk1;
+release channel disk2;
+}
+
