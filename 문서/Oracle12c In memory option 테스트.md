@@ -34,7 +34,7 @@ Star Schema Benchmark 소개
 
  [Star Schema Benchmark (이하-SSB)](http://www.cs.umb.edu/~poneil/StarSchemaB.pdf) 문서와 Github 에 공개된 ssb용 dbgen, 그리고 Oracle Database 테스트를 위한 code 를 참조해 Sample Data 생성. [Star Schema Benchmark (SSB) 용 Oracle Sample Code Download](https://github.com/minimaxa/oracle/blob/master/ssb.tgz)
 
- [SSB 설치 및 Sample Data 생성 문서](./Star%20Schema%20Benchmark.md)
+ [SSB 설치 및 Sample Data 생성 문서 보기](./Star%20Schema%20Benchmark.md)
 
 ### SSB 를 이용한 DW Query 수행  ###
 
