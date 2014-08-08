@@ -1,23 +1,26 @@
-# Oracle 12c In Memory Option 소개 및 테스트
--------------------------------------------
+Oracle 12c In Memory Option 소개 및 테스트
+=========================================
 
-## Oracle 12c In Memory Option 소개 
+Oracle 12c In Memory Option 소개
+------------------------------- 
 ![Oracle12c In Memory Option개요](./Oracle12c-IMO1.jpg)
 
-## 업무 / 데이타 특성에 따른 DBMS 메모리 포맷 지원 
+업무 / 데이타 특성에 따른 DBMS 메모리 포맷 지원
+------------------------------------------- 
 ![업무/데이타 특성에 따른 메모리포맷](./Oracle12c-IMO2.jpg)
 
-## Oracle 12c In Memory Option 테스트 
+Oracle 12c In Memory Option 테스트 
+---------------------------------- 
 Oracle 12c Patchset 1 ( 12.1.0.2 ) 에서 제공하는 Oracle In Memory Option 의  기능테스트를 수행합니다. 이 문서에서 테스트로 사용하는 데이타는 In Memory Option Training 에서도 소개되었던 Pat O'Neil의 [Star Schema Benchmark (이하-SSB)](http://www.cs.umb.edu/~poneil/StarSchemaB.pdf) 를 사용합니다. 
 
-## Oracle 12c 테스트 환경 ##
-
+### Oracle 12c 테스트 환경
 * VirtualBox 4.3.12
 * Oracle Linux 6.5 x86_64 (vCPU : 2, Memory : 4GB ) 
 * Oracle 12.1.0.2
 * SSB Oracle Schema 생성 및 Query Script : [Star Schema Benchmark (SSB)](https://github.com/minimaxa/oracle/blob/master/ssb.tgz)
 
-## Star Schema Benchmark 소개 ##
+Star Schema Benchmark 소개
+-------------------------
 
 매사츄세츠공과대학의 Pat O’Neil 이 기존 [TPC-H](http://www.tpc.org) Benchmark 용 Schema 를 수정해 [Star Schema Benchmark (이하-SSB)](http://www.cs.umb.edu/~poneil/StarSchemaB.pdf) 를 만든 것으로 불필요한 Table 제거와 LINEITEM / ORDER 테이블의 Denomalization 을 통해 좀 더 DW 스럽게 설계한 Star Schema Sample로 이후 Betty O'Neil, Xuedong Chen 과 함께 개선된 Schema를 발표.  
 
@@ -30,6 +33,8 @@ Oracle 12c Patchset 1 ( 12.1.0.2 ) 에서 제공하는 Oracle In Memory Option �
 ### SSB 를 이용한 DW 용 Sample Data 생성 ###
 
  [Star Schema Benchmark (이하-SSB)](http://www.cs.umb.edu/~poneil/StarSchemaB.pdf) 문서와 Github 에 공개된 ssb용 dbgen, 그리고 Oracle Database 테스트를 위한 code 를 참조해 Sample Data 생성. [Star Schema Benchmark (SSB) 용 Oracle Sample Code Download](https://github.com/minimaxa/oracle/blob/master/ssb.tgz)
+
+ [SSB 설치 및 Sample Data 생성 문서](./Star%20Schema%20Benchmark.md)
 
 ### SSB 를 이용한 DW Query 수행  ###
 
@@ -77,6 +82,8 @@ Q4.3
 SQL> exit
 
 </pre>
+
+
 
 > 2.Oracle 12c In Memory Option 설정 
 <pre>
