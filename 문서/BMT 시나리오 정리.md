@@ -98,7 +98,7 @@ swingbench/launcher/launcher.xml
 
 #### 2) Autonomous Health Framework (AHF) Update  
 AHF 는 RAC 의 경우 GI Home 에 설치되어 있으며 새 버젼 설치시 기존 정보 참고함 (root 권한 권장)
-<img src="./images/img843.png" alt="Autonomous Health Framework" />
+<img src="./images/img844.png" alt="Autonomous Health Framework" />
 
 * 사전 설치 
 ```bash
@@ -198,10 +198,12 @@ SELECT DBID, SNAP_INTERVAL, RETENTION FROM DBA_HIST_WR_CONTROL;
 ## 1. 부하테스트 시나리오 <a id="ch-2-1"></a>
 
 ### A. 부하테스트 시나리오 1 
-    <img src="./images/img841.png" alt="시나리오1" />
+
+<img src="./images/img841.png" alt="시나리오1" />
 
 ### B. 부하테스트 시나리오 2 
-    <img src="./images/img842.png" alt="시나리오2" />
+
+<img src="./images/img842.png" alt="시나리오2" />
 
 
 ## 2. 부하용 Schema 생성 <a id="ch-2-2"></a>
