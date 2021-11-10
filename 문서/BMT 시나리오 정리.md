@@ -1,17 +1,21 @@
-#######################################
+# Oracle DB 부하 테스트 방안 
 
-부하 생성 절차 
+# 목차 
 
-#######################################
-
-# 가. 성능시험 환경 구성 
+### 가. 성능시험 환경 구성 
 * [1. 장비 및 SW 환경](#ch-1-1)
 * [2. 성능 모니터링 준비](#ch-1-2)
+### 나. DB 부하 테스트 수행
+* [1. 부하용 스키마 생성](#ch-2-1)
+* [2. 부하 수행](#ch-2-2)
+### 다. 부하테스트 결과 수집  
+* [1. 부하용 VM (리포트 겸용)](#ch-3-1)
+* [2. DB Node의 AWR 자료 취득](#ch-3-2)
+### 라. 부하테스트 결과 보고 및 분석
 
-# 나. DB 부하 테스트 수행
-* [1. 장비 및 SW 환경](#ch-2-1)
-* [2. 성능 모니터링 준비](#ch-2-2)
+### 마. Appendix
 
+# 가. 성능시험 환경 구성 
 
 ## 1. 장비 및 SW 환경 <a id="ch-1-1"></a>
 
@@ -69,6 +73,7 @@ pip install pandas lxml html5lib beautifulsoup4 cchardet PTable
 ```bash
 [oracle@racnode1 ~]$ mkdir visual-awr; cd visual-awr
 [oracle@racnode1 visual-awr]$ unzip ../visual-awr-4.0.zip
+```
 
 #### 4) dstat 
 - 부하용 VM 에서 DB 서버로의 network 발생량 등 확인용 
@@ -84,7 +89,9 @@ pip install pandas lxml html5lib beautifulsoup4 cchardet PTable
 AHF 는 RAC 의 경우 GI Home 에 설치되어 있으며 새 버젼 설치시 기존 정보 참고함 (root 권한 권장)
 
 * 사전 설치 
+```bash
 sudo yum install -y perl-Digest-MD5 perl-Data-Dumper
+```
 
 * AHF 다운로드 : Oracle Automatic Health Framework (AHF) latest
 
@@ -115,28 +122,28 @@ nohup dstat -t -cmgdrnlyp -N total  --output dstat_$(date +"%Y%m%d").txt &
 ### B. DB서버용 성능 모니터링
 
 #### 1) OSWatcher
-----
 root 계정으로 
+```bash
 cd /opt/oracle.ahf/tfa/ext/oswbb
 nohup ./startOSWbb.sh 60 10 &
+```
+>참고 : 
+>./startOSWbb.sh <ARG1> <ARG2> <ARG3> <ARG4>
+>ARG1 = 스냅샷 간격(초).
+>ARG2 = 저장할 아카이브 데이터의 시간.
+>ARG3 = (선택 사항) 각 파일이 생성된 후 자동으로 압축하는 압축 유틸리티의 이름 (gzip 등)
+>ARG4 = (선택 사항) 아카이브 디렉토리를 저장할 대체(기본값 아님) 위치.
 
-참고 : 
-./startOSWbb.sh <ARG1> <ARG2> <ARG3> <ARG4>
-ARG1 = 스냅샷 간격(초).
-ARG2 = 저장할 아카이브 데이터의 시간.
-ARG3 = (선택 사항) 각 파일이 생성된 후 자동으로 압축하는 압축 유틸리티의 이름 (gzip 등)
-ARG4 = (선택 사항) 아카이브 디렉토리를 저장할 대체(기본값 아님) 위치.
-
-./startOSWbb.sh
+* ./startOSWbb.sh
   : 30초 48시간 동안 데이터를 아카이브 파일에 저장 
-./stopOSWbb.sh
+* ./stopOSWbb.sh
 
 #### 2) oratop
---------
+```bash
 $ORACLE_HOME/suptools/oratop/oratop / as sysdba
+```
 
 #### 3) AWR info 및 스냅샷 주기 확인 
----------------------------------
 : AWR 주기를 변경할지 / 부하테스트 수행 전/후 Snapshot 생성할 지 결정 
 
 ##### 1. AWR repository 크기 확인 및 계산 
@@ -172,8 +179,7 @@ SELECT DBID, SNAP_INTERVAL, RETENTION FROM DBA_HIST_WR_CONTROL;
 
    플랫폼 별 준비 ( Unix, X86 )
 
-
-## 1. 부하용 Schema 생성
+## 1. 부하용 Schema 생성 <a id="ch-2-1"></a>
 
 
 ### A. SOE Schema & 데이타 생성
@@ -206,30 +212,35 @@ date; $SB_HOME/bin/shwizard -cl -scale   10 -ts SH10    -u sh10    -p sh10      
 ### C. sbutil 사용법 로 invalid object / table 통계 확인 
 
 #### 1) Invalid Object 확인 
+```bash
 ./sbutil -soe -u soe10 -p soe10 -cs //racnode-scan/orclpdb -val
 ./sbutil -sh  -u sh10  -p sh10  -cs //racnode-scan/orclpdb -val
-
+```
 #### 2) Table 통계정보 확인 
+```bash
 ./sbutil -soe -u soe10 -p soe10 -cs //racnode-scan/orclpdb -tables
 ./sbutil -sh  -u sh10  -p sh10  -cs //racnode-scan/orclpdb -tables
-
+```
 #### 3) 통계정보 재생성 
+```bash
 ./sbutil -soe -u soe10 -p soe10 -cs //racnode-scan/orclpdb -stats
 ./sbutil -sh -u sh10 -p sh10 -cs //racnode-scan/orclpdb -stats
+```
 
-
-## 2. 부하 수행 
+## 2. 부하 수행 <a id="ch-2-2"></a>
 
 ### A. Platform 별 결과 저장 디렉토리
 
 Unix, X86 결과 파일은 따로 저장
 
 Unix Home
+```bash
 /home/oracle/swingbench/unix
-
+```
 X86 Home
+```bash
 /home/oracle/swingbench/x86
-
+```
 ### B. SOE 부하 수행 
 
 
@@ -256,44 +267,48 @@ date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -
 
 # 다. 부하테스트 결과 수집  
 
-## 1. Report 장비 ( 부하용 VM )
+## 1. Report 장비 ( 부하용 VM ) <a id="ch-3-1"></a>
 
 ### A. 플랫폼 별 결과 디렉토리 준비 ( Unix, X86 )
 
 ### B. Swingbench 자료 
-
+```bash
 $SWINGBENCH_HOME/x86
 $SWINGBENCH_HOME/unix
-
-soe_scale10_50user.xml
-sh_scale010_050user.xml
+```
+* soe_scale10_50user.xml
+* sh_scale010_050user.xml
 
 파일들에서 결과 값만 추출해 표로 작성 
-
+```bash
 python ../utils/parse_results.py -r scale10_50user.xml soe_scale10_50user.xml -o soe10.csv
 python ../utils/parse_results.py -r sh_scale010_010user.xml sh_scale010_010user00001.xml -o sh10.csv
-
+```
 ### C. OSWatcher 자료 
 각 DB Node 들 oswbb 의 archive 디렉토리내 모든 디렉토리 (일부 필요없지만... )
+```bash
 /opt/oracle.ahf/tfa/ext/oswbb/archive/* 
-
+```
 DB 노드별로 리포트 서버로 복사해옴
+```bash
 /home/oracle/visual-awr/input/
 [oracle@ora19 input]$ scp -r root@racnode1:/opt/oracle.ahf/tfa/ext/oswbb/archive racnode1-osw
 [oracle@ora19 input]$ scp -r root@racnode2:/opt/oracle.ahf/tfa/ext/oswbb/archive racnode2-osw
-
-## 2. AWR 자료 
+```
+## 2. AWR 자료 <a id="ch-3-2"></a>
 각 DB Node 들에서 취합됨 
 
 ### A. Visual-AWR script 설명 
    : Visual-AWR Assets 디렉토리아래의 script 활용
+```bash
 visual-awr/assets/mkawrscript.sql
 visual-awr/assets/getawr.sql
-
+```
 ### B. AWR 정보 취득
 
 #### 1) AWR snapshot 정보 취득
 DBA 권한으로 CDB 에 접속
+```sql
 [oracle@racnode2 assets]$ sqlplus sys/oracle@orcl as sysdba
 SQL> @mkawrscript.sql
 DB Id       : 
@@ -301,48 +316,44 @@ inst_num  :
 num_days :
 begin_snap : 
 end_snap:
+```
 getawr.sql 생성됨 
 
 #### 2) AWR Report 취득
- 
+```sql 
 @getawr.sql
 Beginning AWR generation...
 Creating AWR report awrrpt_20211107_0600-20211107_0701_INST_1_18-19.html for INST#1 from snapshot 18 to 19...
 Creating AWR report awrrpt_20211107_0701-20211107_0800_INST_1_19-20.html for INST#1 from snapshot 19 to 20...
-
+```
 #### 3) AWR Report 전송 
 :  AWR Report 는 Report 서버로 전송
 Visual-AWR 분석을 위해 input 디렉토리 밑에 서버별로 저장 
+```bash
 /home/oracle/visual-awr/input/racnode1
 /home/oracle/visual-awr/input/racnode2
-
+```
 # 라. 부하테스트 결과 보고 및 분석
 
-## 1.  부하용 VM 
+## 1.  부하용 VM <a id="ch-4-1"></a>
 
 ### OS 자원/성능 (네트워크 포함) 정보 
 : dstat output file ( dstat_$(date +"%Y%m%d").txt )
 
-## 2. DB 노드 
+## 2. DB 노드 <a id="ch-4-2"></a>
 
 ### Visual-AWR HTML 결과 확인 
-======================================
 <visual-awr>/html/report/ 아래 생성된 HTML 리포트를 구글 크롬 (강력 권장) 으로 열어본다.
 
 
+# 마. Appendix 
 
+## 1. 환경변수 
 
-참조 : ODA X82HA 의 Database Shape 별 성능 수치 자료 ( BMT 결과 아님 ) 
-https://www.oracle.com/a/ocom/docs/engineered-systems/database-appliance/oda-x82ha-perf-wp-5972834.pdf
+### A. DB 노드용 .bash_profile
 
-
-마. Appendix 
-
-1. DB 노드용 .bash_profile
-=======================
-
-참고 :  oracle 계정 .bash_profile 일부
-==============================================
+#### 1) oracle 계정 .bash_profile 일부
+```bash
 # User specific aliases and functions
 export ORACLE_HOSTNAME=racnode1.example.com
 export ORACLE_UNQNAME=orcl
@@ -384,9 +395,10 @@ alias v_dblog='vi $ORACLE_BASE/diag/rdbms/$ORACLE_UNQNAME/$ORACLE_SID/trace/aler
 
 alias python=python3
 alias pip=pip3
+```
 
-참고 :  grid 계정 .bash_profile 일부
-==============================================
+#### 2) grid 계정 .bash_profile 일부
+```bash
 # Oracle specific aliases and functions
 export ORACLE_HOSTNAME=racnode1.example.com
 export ORACLE_UNQNAME=orcl
@@ -422,30 +434,30 @@ alias v_asmlog='vi $GRID_BASE/diag/asm/+asm/$ASM_SID/trace/alert_$ASM_SID.log'
 alias v_crsdlog='vi $GRID_BASE/diag/crs/$HOSTNAME/crs/trace/alert.log'
 alias v_asmcmdlog='vi $GRID_BASE/diag/asmcmd/user_grid/$HOSTNAME/alert/alert.log'
 alias v_dblog='vi $ORACLE_BASE/diag/rdbms/$ORACLE_UNQNAME/$ORACLE_SID/trace/alert_$ORACLE_SID.log'
+```
 
-참고 :  grid_env
-==============================================
+#### 3) grid_env
+```bash
 export ORACLE_SID=+ASM1
 export ORACLE_HOME=$GRID_HOME
 export PATH=$ORACLE_HOME/bin:$BASE_PATH
 
 export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib
 export CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib
+```
 
-참고 :  db_env
-==============================================
+#### 4) db_env
+```bash
 export ORACLE_SID=ORCL1
 export ORACLE_HOME=$DB_HOME
 export PATH=$ORACLE_HOME/bin:$BASE_PATH
 
 export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib
 export CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib
+```
 
-#################################################################################
-
-부하용VM  .bash_profile
-=======================
-
+### B. 부하용VM  .bash_profile
+```bash
 # User specific aliases and functions
 export ORACLE_BASE=/u01/app/oracle
 export ORACLE_HOME=$ORACLE_BASE/product/19.3.0/client_1
@@ -460,64 +472,71 @@ export CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib
 export BASE_PATH=/usr/sbin:$PATH
 export PATH=$ORACLE_HOME/bin:/home/oracle/sqlcl/bin:$ORACLE_HOME/perl/bin:$BASE_PATH
 export SB_HOME=/home/oracle/swingbench
+```
 
-#######################################################################
+## 2. SSH User Equivalence Configuration
 
-SSH User Equivalence Configuration
+### A. Manual Key-Based Authentication 
 
-1. Manual Key-Based Authentication 
-----------------------------------
-1. Node1번 / 2번 ssh key 생성
+#### 1) Node1번 / 2번 ssh key 생성
+```bash
 su - oracle
 mkdir ~/.ssh
 chmod 700 ~/.ssh
 /usr/bin/ssh-keygen -t rsa # Accept the default settings.
+```
 
-2. Public  Key 복사 
-- Node 1번
+#### 2) Public  Key 복사 
+
+##### Node 1번
+```bash
 cd ~/.ssh
 cat id_rsa.pub >> authorized_keys
 scp authorized_keys racnode2:/home/oracle/.ssh/
-- Node 2번
+```
+
+##### Node 2번
+```bash
 cd ~/.ssh
 cat id_rsa.pub >> authorized_keys
 scp authorized_keys racnode1:/home/oracle/.ssh/
-
+```
+```bash
 ssh racnode1 date
 ssh racnode2 date
+```
 
-2. sshUserSetup.sh (Oracle Method)
+### B. sshUserSetup.sh (Oracle Method)
 $ ./sshUserSetup.sh 
 
-#################################################
+## 3. 일반 사용자로 sudo 사용 ( 패스워드없이 )
 
-일반 사용자로 sudo 사용 ( 패스워드없이 )
-
+```bash
 vi /etc/sudoers
 
 root 		ALL=(ALL)  ALL
 oracle       ALL=(ALL)       NOPASSWD: ALL
+```
 
-
-#######################################################################
-
+## 4. Oracle Linux 7에서 로컬 yum repository 설정
 * 관리원은 DB 서버에서 outbound network 차단
 
-Oracle Linux 7에서 로컬 yum repository 설정
-===============================
+#### 1) DVD 또는 ISO 를 마운트 
 
-1. DVD 또는 ISO 를 마운트 
-
-2. 미디어 내용 전체를 localrepo 디렉토리에 복사
+#### 2) 미디어 내용 전체를 localrepo 디렉토리에 복사
+```bash
 # mkdir -p /localrepo
 # cp -rv /run/media/root/OL-7.9\ Server.x86_64/Packages/ /localrepo/
+```
 
-3. 기존 repo 파일명 변경
+#### 3) 기존 repo 파일명 변경
+```bash
 # cd /etc/yum.repos.d/
 # mv public-yum-ol7.repo public-yum-ol7.repobak 
+```
 
-4. local repositor 용 파일 생성 
-
+#### 4) local repositor 용 파일 생성 
+```bash
 # vi /etc/yum.repos.d/local.repo
 
 # OL 7용
@@ -526,11 +545,21 @@ name=localrepository
 baseurl=file:///localrepo/
 enabled=1
 gpgcheck=0
+```
 
-5. Local Repository 업데이트
+#### 5) Local Repository 업데이트
+```bash
 # createrepo /localrepo/
+```
 
-6.  확인 및 테스트 
+#### 6)  확인 및 테스트 
+```bash
 # yum clean all
 # yum repolist
 # yum install python3
+```
+
+## 5. ODA X82HA 의 Database Shape 별 성능 수치 자료 ( BMT 결과 아님 ) 
+https://www.oracle.com/a/ocom/docs/engineered-systems/database-appliance/oda-x82ha-perf-wp-5972834.pdf
+
+
