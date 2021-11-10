@@ -413,7 +413,7 @@ DB 노드별로 리포트 서버로 복사해옴
 [oracle@ora19 input]$ scp -r root@racnode1:/opt/oracle.ahf/tfa/ext/oswbb/archive racnode1-osw
 [oracle@ora19 input]$ scp -r root@racnode2:/opt/oracle.ahf/tfa/ext/oswbb/archive racnode2-osw
 ```
-## 2. DB 노드의 AWR 자료 수집 <a id="ch-6-2"></a>
+## 2. DB 노드의 AWR 자료 수집 <a id="ch-5-2"></a>
 각 DB Node 들에서 취합됨 
 
 ### A. Visual-AWR script 설명 
@@ -453,12 +453,12 @@ Visual-AWR 분석을 위해 input 디렉토리 밑에 서버별로 저장
 ```
 # 바. 부하테스트 결과 보고 및 분석
 
-## 1.  부하용 VM <a id="ch-7-1"></a>
+## 1.  부하용 VM <a id="ch-6-1"></a>
 
 ### OS 자원/성능 (네트워크 포함) 정보 
 : dstat output file ( dstat_$(date +"%Y%m%d").txt )
 
-## 2. DB 노드 <a id="ch-7-2"></a>
+## 2. DB 노드 <a id="ch-6-2"></a>
 
 ### Visual-AWR HTML 결과 확인 
 <visual-awr>/html/report/ 아래 생성된 HTML 리포트를 구글 크롬 (강력 권장) 으로 열어본다.
@@ -466,7 +466,7 @@ Visual-AWR 분석을 위해 input 디렉토리 밑에 서버별로 저장
 
 # 사. Appendix 
 
-## 1. 환경변수 <a id="ch-8-1"></a>
+## 1. 환경변수 <a id="ch-7-1"></a>
 
 ### A. DB 노드용 .bash_profile
 
@@ -592,7 +592,7 @@ export PATH=$ORACLE_HOME/bin:/home/oracle/sqlcl/bin:$ORACLE_HOME/perl/bin:$BASE_
 export SB_HOME=/home/oracle/swingbench
 ```
 
-## 2. SSH User Equivalence Configuration <a id="ch-8-2"></a>
+## 2. SSH User Equivalence Configuration <a id="ch-7-2"></a>
 
 ### A. Manual Key-Based Authentication 
 
@@ -627,7 +627,7 @@ ssh racnode2 date
 ### B. sshUserSetup.sh (Oracle Method)
 $ ./sshUserSetup.sh 
 
-## 3. 일반 사용자로 sudo 사용 ( 패스워드없이 )<a id="ch-8-3"></a>
+## 3. 일반 사용자로 sudo 사용 ( 패스워드없이 )<a id="ch-7-3"></a>
 
 ```bash
 vi /etc/sudoers
@@ -636,7 +636,7 @@ root 		ALL=(ALL)  ALL
 oracle       ALL=(ALL)       NOPASSWD: ALL
 ```
 
-## 4. Oracle Linux 7에서 로컬 yum repository 설정<a id="ch-8-4"></a>
+## 4. Oracle Linux 7에서 로컬 yum repository 설정<a id="ch-7-4"></a>
 * 관리원은 DB 서버에서 outbound network 차단
 
 #### 1) DVD 또는 ISO 를 마운트 
