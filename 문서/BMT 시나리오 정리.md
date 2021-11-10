@@ -5,20 +5,33 @@
 ### 가. 성능시험 환경 구성 
 * [1. 장비 및 SW 환경](#ch-1-1)
 * [2. 성능 모니터링 준비](#ch-1-2)
-### 나. DB 부하 테스트 수행
-* [1. 부하용 스키마 생성](#ch-2-1)
-* [2. 부하 수행](#ch-2-2)
-### 다. 부하테스트 결과 수집  
-* [1. 부하용 VM (리포트 겸용)](#ch-3-1)
-* [2. DB Node의 AWR 자료 취득](#ch-3-2)
-### 라. 부하테스트 결과 보고 및 분석
-* [1. 부하용 VM](#ch-4-1)
-* [2. DB 노드](#ch-4-2)
-### 마. Appendix
-* [1. 환경변수](#ch-5-1)
-* [2. SSH User Equivalence Configuration](#ch-5-2)
-* [3. 일반 사용자로 sudo 사용 ( 패스워드없이 )](#ch-5-3)
-* [4. Oracle Linux 7에서 로컬 yum repository 설정](#ch-5-4)
+### 나. DB 부하 테스트 사전 검증 및 DB 생성
+* [1. 부하테스트 시나리오](#ch-2-1)
+* [2. 스토리지 IOPS 테스트](#ch-2-2)
+* [3. 기본 DB 생성](#ch-2-3)
+### 다. DB 부하 테스트 - 성능
+* [1. TBS 생성 테스트 초기 데이터 적재](#ch-3-1)
+* [2. DB I/O 테스트](#ch-3-2)
+* [3.  Workload 별, VU 별 성능 테스트](#ch-3-3)
+* [4. 최대부하테스트](#ch-3-4)
+* [5. In Memory DB](#ch-3-5)
+* [6. 데이터 암호화/질의](#ch-3-6)
+* [7. 데이터 압축/질의](#ch-3-7)
+* [8. 백업](#ch-3-8)
+### 라. 가용성 / 안정성
+* [1.클러스터 장애 대처 기능)](#ch-4-1)
+* [2. DB Node의 AWR 자료 취득](#ch-4-2)
+### 마. 부하테스트 결과 수집  
+* [1.부하용 VM (리포트 겸용)](#ch-5-1)
+* [2. DB Node의 AWR 자료 취득)](#ch-5-1)
+### 바. 부하테스트 결과 보고 및 분석
+* [1. 부하용 VM](#ch-6-1)
+* [2. DB 노드](#ch-6-2)
+### 사. Appendix
+* [1. 환경변수](#ch-7-1)
+* [2. SSH User Equivalence Configuration](#ch-7-2)
+* [3. 일반 사용자로 sudo 사용 ( 패스워드없이 )](#ch-7-3)
+* [4. Oracle Linux 7에서 로컬 yum repository 설정](#ch-7-4)
 
 # 가. 성능시험 환경 구성 
 <img src="./images/img839.png" alt="BMT환경" />
@@ -191,7 +204,7 @@ EXEC DBMS_WORKLOAD_REPOSITORY.MODIFY_SNAPSHOT_SETTINGS(RETENTION=>60*24*15,INTER
 SELECT DBID, SNAP_INTERVAL, RETENTION FROM DBA_HIST_WR_CONTROL;
 ```
 
-# 나. DB 부하 테스트 수행
+# 나. DB 부하 테스트 사전 검증 및 DB 생성
 
    플랫폼 별 준비 ( Unix, X86 )
 
@@ -205,11 +218,24 @@ SELECT DBID, SNAP_INTERVAL, RETENTION FROM DBA_HIST_WR_CONTROL;
 
 <img src="./images/img842.png" alt="시나리오2" />
 
+## 2. HW 사전 검증 및 DB 생성 
 
-## 2. 부하용 Schema 생성 <a id="ch-2-2"></a>
+### A. BMT 수행 장비 SPEC 검토 및 점검 
+ 
+### B. 스토리지 IOPS 테스트 (ORION) / IOPS baseline <a id="ch-2-2"></a>
+ORION 을 활용한 스토리지 IOPS 테스트
 
+## 3. 기본 DB 생성  <a id="ch-2-3"></a>
+* CDB
+* 2개 PDB 생성
 
-### A. SOE Schema & 데이타 생성
+# 다. DB 부하 테스트 - 성능
+
+## 1. TBS 생성 테스트 초기 데이터 적재 <a id="ch-3-1"></a>
+
+### A. 테이블스페이스 생성
+
+### B. SOE 초기 데이터 구축
 
 각 Schema 생성 결과물도 저장 
 
@@ -218,7 +244,7 @@ date; $SB_HOME/bin/oewizard -cl -scale   10 -ts SOE10   -u soe10   -p soe10  -tc
 date; $SB_HOME/bin/oewizard -cl -scale   10 -ts SOE10   -u soe10   -p soe10  -tc 16  -nopart -df +DATA  -cs //racnode-scan/orclpdb -dbap oracle -create -c oewizard.xml ; date
 ```
 
-### B. SH Schema & 데이타 생성
+### C. SH 초기 데이터 구축
 
 ```bash
 date; $SB_HOME/bin/shwizard -cl -scale   10 -ts SH10    -u sh10    -p sh10                    -df +DATA   -cs //racnode-scan/orclpdb -dbap oracle -drop   -c shwizard.xml ; date
@@ -236,7 +262,7 @@ date; $SB_HOME/bin/shwizard -cl -scale   10 -ts SH10    -u sh10    -p sh10      
 >8. -compress / -nocompress, -oltpcompress / -hcccompress
 >ETC. -constraints, -debug, -generate, -idf, -its, -ro, -sp
 
-### C. sbutil 사용법 로 invalid object / table 통계 확인 
+### D. sbutil 사용법 로 invalid object / table 통계 확인
 
 #### 1) Invalid Object 확인 
 ```bash
@@ -254,32 +280,42 @@ date; $SB_HOME/bin/shwizard -cl -scale   10 -ts SH10    -u sh10    -p sh10      
 ./sbutil -sh -u sh10 -p sh10 -cs //racnode-scan/orclpdb -stats
 ```
 
-## 3. 부하 수행 <a id="ch-2-3"></a>
+## 2. DB I/O 테스트 <a id="ch-3-2"></a>
 
-### A. Platform 별 결과 저장 디렉토리
+### A. SLOB 로 DB 테스트 
+
+
+## 3.  Workload 별, VU 별 성능 테스트 <a id="ch-3-3"></a>
+
+#### 1) Platform 별 결과 저장 디렉토리
 
 Unix, X86 결과 파일은 따로 저장
 
-Unix Home
+* Unix Home
 ```bash
 /home/oracle/swingbench/unix
 ```
-X86 Home
+* X86 Home
 ```bash
 /home/oracle/swingbench/x86
 ```
-### B. SOE 부하 수행 
 
+### A. 온라인 트랜잭션	
 
-#### 1) charbench 수행 
+#### 1) SOE 부하 수행 
+
+##### charbench 수행
+
 ```bash
 cd /home/oracle/swingbench/x86
 date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u soe10    -p soe10   -r ../x86/soe_scale10_50user_$(date +"%Y%m%d").xml    -c ../configs/SOE_Server_Side_V2.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
 ```
 
-### C. SH 부하 수행 
+### B. 배치 트랜잭션	
 
-#### 1) charbench 수행 
+#### 1) SH 부하 수행 
+
+##### 1) charbench 수행 
 ```bash
 cd /home/oracle/swingbench/x86
 date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u sh10    -p sh10     -r ../x86/sh_scale010_050user_$(date +"%Y%m%d").xml   -c ../configs/Sales_History.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
@@ -292,11 +328,62 @@ date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -
 >5. -v  trans|cpu|disk|dml|errs|tpm|tps|users|resp|vresp|tottx|trem
 >6. -wc 
 
+### C. 혼합 트랜잭션
 
-# 다. 부하테스트 결과 수집  
+#### 1) SOE / SH 혼합 수행 
+
+##### 1) charbench 수행 
 
 
-## 1. Report 장비 ( 부하용 VM ) <a id="ch-3-1"></a>
+## 4. 최대부하테스트 <a id="ch-3-4"></a>
+
+
+## 5. In Memory DB	  <a id="ch-3-5"></a>
+
+### A. In Memory Column Store Population 		
+
+### B. 질의 성능		
+
+## 6. 데이터 암호화/질의   <a id="ch-3-6"></a>
+
+### A. 테이블스페이스 암호화  
+
+### B. 암호화 테이블  질의  
+
+## 7. 데이터 압축/질의 <a id="ch-3-7"></a>
+
+### A. 테이블 압축 	
+
+### B. 압축 테이블  질의	
+
+
+## 8. 백업    <a id="ch-3-4"></a>
+
+### A. RMAN Local 백업 / 채널 증가	
+
+### B. DataPump 백업	
+
+### C. DataPump 네트워크 백업	
+
+# 라. 가용성 / 안정성
+		
+## 1.클러스터 장애 대처 기능	<a id="ch-4-1"></a>
+
+### A. Node 장애
+
+### B. Network 장애
+
+### C. DBMS Process 장애
+
+## 2.장시간 운영   <a id="ch-4-1"></a>
+
+고정부하로 운영	
+
+
+# 마. 부하테스트 결과 수집  
+
+
+## 1. 부하용 VM (리포트 겸용)<a id="ch-5-1"></a>
 
 
 ### A. 플랫폼 별 결과 디렉토리 준비 ( Unix, X86 )
@@ -326,7 +413,7 @@ DB 노드별로 리포트 서버로 복사해옴
 [oracle@ora19 input]$ scp -r root@racnode1:/opt/oracle.ahf/tfa/ext/oswbb/archive racnode1-osw
 [oracle@ora19 input]$ scp -r root@racnode2:/opt/oracle.ahf/tfa/ext/oswbb/archive racnode2-osw
 ```
-## 2. AWR 자료 <a id="ch-3-2"></a>
+## 2. DB 노드의 AWR 자료 수집 <a id="ch-6-2"></a>
 각 DB Node 들에서 취합됨 
 
 ### A. Visual-AWR script 설명 
@@ -364,22 +451,22 @@ Visual-AWR 분석을 위해 input 디렉토리 밑에 서버별로 저장
 /home/oracle/visual-awr/input/racnode1
 /home/oracle/visual-awr/input/racnode2
 ```
-# 라. 부하테스트 결과 보고 및 분석
+# 바. 부하테스트 결과 보고 및 분석
 
-## 1.  부하용 VM <a id="ch-4-1"></a>
+## 1.  부하용 VM <a id="ch-7-1"></a>
 
 ### OS 자원/성능 (네트워크 포함) 정보 
 : dstat output file ( dstat_$(date +"%Y%m%d").txt )
 
-## 2. DB 노드 <a id="ch-4-2"></a>
+## 2. DB 노드 <a id="ch-7-2"></a>
 
 ### Visual-AWR HTML 결과 확인 
 <visual-awr>/html/report/ 아래 생성된 HTML 리포트를 구글 크롬 (강력 권장) 으로 열어본다.
 
 
-# 마. Appendix 
+# 사. Appendix 
 
-## 1. 환경변수 <a id="ch-5-1"></a>
+## 1. 환경변수 <a id="ch-8-1"></a>
 
 ### A. DB 노드용 .bash_profile
 
@@ -505,7 +592,7 @@ export PATH=$ORACLE_HOME/bin:/home/oracle/sqlcl/bin:$ORACLE_HOME/perl/bin:$BASE_
 export SB_HOME=/home/oracle/swingbench
 ```
 
-## 2. SSH User Equivalence Configuration <a id="ch-5-2"></a>
+## 2. SSH User Equivalence Configuration <a id="ch-8-2"></a>
 
 ### A. Manual Key-Based Authentication 
 
@@ -540,7 +627,7 @@ ssh racnode2 date
 ### B. sshUserSetup.sh (Oracle Method)
 $ ./sshUserSetup.sh 
 
-## 3. 일반 사용자로 sudo 사용 ( 패스워드없이 )<a id="ch-5-3"></a>
+## 3. 일반 사용자로 sudo 사용 ( 패스워드없이 )<a id="ch-8-3"></a>
 
 ```bash
 vi /etc/sudoers
@@ -549,7 +636,7 @@ root 		ALL=(ALL)  ALL
 oracle       ALL=(ALL)       NOPASSWD: ALL
 ```
 
-## 4. Oracle Linux 7에서 로컬 yum repository 설정<a id="ch-5-4"></a>
+## 4. Oracle Linux 7에서 로컬 yum repository 설정<a id="ch-8-4"></a>
 * 관리원은 DB 서버에서 outbound network 차단
 
 #### 1) DVD 또는 ISO 를 마운트 
