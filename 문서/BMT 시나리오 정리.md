@@ -45,24 +45,26 @@ source ~/.bash_profile
 
 #### 2) Swingbench 
 
-* 사전 준비
-  JDK 1.8
+* 필수 Software
+   + [JDK 1.8 다운로드](https://www.oracle.com/java/technologies/downloads/#java8)
 
-* 다운로드
-swingbench 2.6
+* [Swingbench 2.6](http://www.dominicgiles.com/swingbench.html)
+   + [다운로드](https://github.com/domgiles/swingbench-public/releases/download/production/swingbenchlatest.zip)
+   + 압축 파일 해제 ( 예: /home/oracle 위치에서 압축해제)
 
-* 환경변수
+* 환경변수 설정 (option)
+```bash
 export SB_HOME=/home/oracle/swingbench
+```
 
-* 플랫폼별 수행 위치
-
+* 플랫폼별 수행 위치 (BMT를 위해 임의로 생성한 것임)
    + Unix Home
 /home/oracle/swingbench/unix
 
    + X86 Home
 /home/oracle/swingbench/x86
 
-* Swingbench Memory 조정 
+* 대량 부하시 Swingbench launcher 의 Memory 조정 가능
 swingbench/launcher/launcher.xml
 
     <jvmargset id="base.jvm.args">
@@ -73,17 +75,18 @@ swingbench/launcher/launcher.xml
 
 #### 3) Visual-AWR ( Oracle Internal )
 * 다운로드 
-
 * Visual AWR 관련 python 패키지 설치 
-pip install pandas lxml html5lib beautifulsoup4 cchardet PTable
-
 ```bash
+[oracle@racnode1 ~]$ sudo pip install pandas lxml html5lib beautifulsoup4 cchardet PTable
 [oracle@racnode1 ~]$ mkdir visual-awr; cd visual-awr
 [oracle@racnode1 visual-awr]$ unzip ../visual-awr-4.0.zip
 ```
 
 #### 4) dstat 
-- 부하용 VM 에서 DB 서버로의 network 발생량 등 확인용 
+* 부하용 VM 에서 DB 서버로의 network 발생량 등 확인용 
+```bash
+[oracle@racnode1 ~]$ sudo yum install -y dstat
+```
 
 ### B. DB 서버  ( Oracle 19.13 RAC ) 
 
@@ -91,6 +94,7 @@ pip install pandas lxml html5lib beautifulsoup4 cchardet PTable
  * X86 (VMware 7) OL 7.9 (UEK)
  * Unix                Solaris 11.14
      - Unix 의 경우 Bare Metal 과 OVM Server for SPARC 모두 수행 
+##### Oracle Database 구성 <img src="./images/img843.png" alt="Oracle Database 구성" />
 
 #### 2) AHF 설치 
 AHF 는 RAC 의 경우 GI Home 에 설치되어 있으며 새 버젼 설치시 기존 정보 참고함 (root 권한 권장)
