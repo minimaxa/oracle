@@ -96,8 +96,9 @@ swingbench/launcher/launcher.xml
      - Unix 의 경우 Bare Metal 과 OVM Server for SPARC 모두 수행 
 ##### Oracle Database 구성 <img src="./images/img843.png" alt="Oracle Database 구성" />
 
-#### 2) AHF 설치 
+#### 2) Autonomous Health Framework (AHF) Update  
 AHF 는 RAC 의 경우 GI Home 에 설치되어 있으며 새 버젼 설치시 기존 정보 참고함 (root 권한 권장)
+<img src="./images/img843.png" alt="Autonomous Health Framework" />
 
 * 사전 설치 
 ```bash
@@ -105,7 +106,9 @@ sudo yum install -y perl-Digest-MD5 perl-Data-Dumper
 ```
 
 * AHF 다운로드 : Oracle Automatic Health Framework (AHF) latest
-
+  Autonomous Health Framework (AHF) - Including TFA and ORAchk/EXAchk (Doc ID 2550798.1)
+  + [AHF 21.3 for Linux](https://updates.oracle.com/Orion/Services/download/AHF-LINUX_v21.3.0.zip?aru=24481521&patch_file=AHF-LINUX_v21.3.0.zip)
+  + [AHF 21.3 for Solaris SPARC 64](https://updates.oracle.com/Orion/Services/download/AHF-SOLARIS.SPARC64_v21.3.0.zip?aru=24481520&patch_file=AHF-SOLARIS.SPARC64_v21.3.0.zip)
 ```bash
 mkdir ora_ahf; cd ora_ahf
 unzip ../AHF-LINUX_v21.3.0.zip
@@ -113,7 +116,7 @@ unzip ../AHF-LINUX_v21.3.0.zip
 ```
 
 #### 3) OSWatcher 실행 
-: ahf 내 포함되어 있음 
+: AHF 내 포함되어 있음 
  
 #### 4) orachk 실행 
 : AHF 내 포함되어 있음 
@@ -122,18 +125,20 @@ BMT 수행/전후 실행 결과
 
 ## 2. 성능 모니터링 준비 <a id="ch-1-2"></a>
 
-플랫폼 별 준비 ( Unix, X86 )
+* 플랫폼 별 준비 ( Unix, X86 )
 
 ### A. 부하용 vm 성능 모니터링
 
+```bash
 dstat -t -cmgdrnlyp -N total  --output dstat_$(date +"%Y%m%d").txt 
 또는 
 nohup dstat -t -cmgdrnlyp -N total  --output dstat_$(date +"%Y%m%d").txt &
+```
 
 ### B. DB서버용 성능 모니터링
 
 #### 1) OSWatcher
-root 계정으로 
+AHF 내에 포함되어 있으며 root 계정으로 실행을 권장
 ```bash
 cd /opt/oracle.ahf/tfa/ext/oswbb
 nohup ./startOSWbb.sh 60 10 &
@@ -146,7 +151,7 @@ nohup ./startOSWbb.sh 60 10 &
 >ARG4 = (선택 사항) 아카이브 디렉토리를 저장할 대체(기본값 아님) 위치.
 
 * ./startOSWbb.sh
-  : 30초 48시간 동안 데이터를 아카이브 파일에 저장 
+  : (디폴트) 30초 48시간 동안 데이터를 아카이브 파일에 저장 
 * ./stopOSWbb.sh
 
 #### 2) oratop
@@ -190,7 +195,16 @@ SELECT DBID, SNAP_INTERVAL, RETENTION FROM DBA_HIST_WR_CONTROL;
 
    플랫폼 별 준비 ( Unix, X86 )
 
-## 1. 부하용 Schema 생성 <a id="ch-2-1"></a>
+## 1. 부하테스트 시나리오 <a id="ch-2-1"></a>
+
+### A. 부하테스트 시나리오 1 
+    <img src="./images/img841.png" alt="시나리오1" />
+
+### B. 부하테스트 시나리오 2 
+    <img src="./images/img842.png" alt="시나리오2" />
+
+
+## 2. 부하용 Schema 생성 <a id="ch-2-2"></a>
 
 
 ### A. SOE Schema & 데이타 생성
@@ -238,7 +252,7 @@ date; $SB_HOME/bin/shwizard -cl -scale   10 -ts SH10    -u sh10    -p sh10      
 ./sbutil -sh -u sh10 -p sh10 -cs //racnode-scan/orclpdb -stats
 ```
 
-## 2. 부하 수행 <a id="ch-2-2"></a>
+## 3. 부하 수행 <a id="ch-2-3"></a>
 
 ### A. Platform 별 결과 저장 디렉토리
 
