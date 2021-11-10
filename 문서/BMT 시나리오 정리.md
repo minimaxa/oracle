@@ -12,8 +12,13 @@
 * [1. 부하용 VM (리포트 겸용)](#ch-3-1)
 * [2. DB Node의 AWR 자료 취득](#ch-3-2)
 ### 라. 부하테스트 결과 보고 및 분석
-
+* [1. 부하용 VM](#ch-4-1)
+* [2. DB 노드](#ch-4-2)
 ### 마. Appendix
+* [1. 환경변수](#ch-5-1)
+* [2. SSH User Equivalence Configuration](#ch-5-2)
+* [3. 일반 사용자로 sudo 사용 ( 패스워드없이 )](#ch-5-3)
+* [4. Oracle Linux 7에서 로컬 yum repository 설정](#ch-5-4)
 
 # 가. 성능시험 환경 구성 
 
@@ -348,7 +353,7 @@ Visual-AWR 분석을 위해 input 디렉토리 밑에 서버별로 저장
 
 # 마. Appendix 
 
-## 1. 환경변수 
+## 1. 환경변수 <a id="ch-5-1"></a>
 
 ### A. DB 노드용 .bash_profile
 
@@ -474,7 +479,7 @@ export PATH=$ORACLE_HOME/bin:/home/oracle/sqlcl/bin:$ORACLE_HOME/perl/bin:$BASE_
 export SB_HOME=/home/oracle/swingbench
 ```
 
-## 2. SSH User Equivalence Configuration
+## 2. SSH User Equivalence Configuration <a id="ch-5-2"></a>
 
 ### A. Manual Key-Based Authentication 
 
@@ -509,7 +514,7 @@ ssh racnode2 date
 ### B. sshUserSetup.sh (Oracle Method)
 $ ./sshUserSetup.sh 
 
-## 3. 일반 사용자로 sudo 사용 ( 패스워드없이 )
+## 3. 일반 사용자로 sudo 사용 ( 패스워드없이 )<a id="ch-5-3"></a>
 
 ```bash
 vi /etc/sudoers
@@ -518,7 +523,7 @@ root 		ALL=(ALL)  ALL
 oracle       ALL=(ALL)       NOPASSWD: ALL
 ```
 
-## 4. Oracle Linux 7에서 로컬 yum repository 설정
+## 4. Oracle Linux 7에서 로컬 yum repository 설정<a id="ch-5-4"></a>
 * 관리원은 DB 서버에서 outbound network 차단
 
 #### 1) DVD 또는 ISO 를 마운트 
