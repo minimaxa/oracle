@@ -21,8 +21,10 @@
 * [4. Oracle Linux 7에서 로컬 yum repository 설정](#ch-5-4)
 
 # 가. 성능시험 환경 구성 
+<img src="./images/img839.png" alt="BMT환경" />
 
 ## 1. 장비 및 SW 환경 <a id="ch-1-1"></a>
+
 
 ### A. 부하용 vm ( RHEL 7.9 또는 OL 7.9 ) ( Report 용도 포함 )
 
@@ -270,11 +272,15 @@ date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -
 >5. -v  trans|cpu|disk|dml|errs|tpm|tps|users|resp|vresp|tottx|trem
 >6. -wc 
 
+
 # 다. 부하테스트 결과 수집  
+
 
 ## 1. Report 장비 ( 부하용 VM ) <a id="ch-3-1"></a>
 
+
 ### A. 플랫폼 별 결과 디렉토리 준비 ( Unix, X86 )
+
 
 ### B. Swingbench 자료 
 ```bash
