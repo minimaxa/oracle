@@ -33,7 +33,7 @@
 * [3. 일반 사용자로 sudo 사용 ( 패스워드없이 )](#ch-7-3)
 * [4. Oracle Linux 7에서 로컬 yum repository 설정](#ch-7-4)
 * [5. HammerDB 부하테스트](#ch-7-5)
-* [6. ODA X82HA 의 Database Shape 별 성능 수치](#ch-7-6)
+* [6. ODA X8-2 HA 의 Database Shape 별 성능 수치](#ch-7-6)
 
 ##############################################################################
 
@@ -1639,7 +1639,7 @@ hammerdb>
 
 -------------------------------------------------------------------------------------------------------------------
 
-## 6. ODA X82HA 의 Database Shape 별 성능 수치 자료<a id="ch-7-6"></a>
+## 6. ODA X8-2 HA 의 Database Shape 별 성능 수치 자료<a id="ch-7-6"></a>
 이 자료를 ODA X8-2 HA 장비의 BMT 성능 결과로 활용하면 안되며 ( **BMT 결과 아님** )  ODA X8-2 HA 장비에서 제공하는 
 Database Template 의 Shape 에 따른 Swingbench 결과 값 비교 와 Shape 확장에 따른 성능 확장성을 참고하는 자료입니다.
 [ODA X82HA 의 Database Shape 별 성능 수치 자료](https://www.oracle.com/a/ocom/docs/engineered-systems/database-appliance/oda-x82ha-perf-wp-5972834.pdf)
