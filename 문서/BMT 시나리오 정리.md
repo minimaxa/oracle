@@ -35,6 +35,8 @@
 * [5. HammerDB 부하테스트](#ch-7-5)
 * [6. ODA X82HA 의 Database Shape 별 성능 수치](#ch-7-6)
 
+##############################################################################
+
 # 가. 성능시험 환경 구성 
 <img src="./images/img839.png" alt="BMT환경" />
 
@@ -138,6 +140,8 @@ unzip ../AHF-LINUX_v21.3.0.zip
 
 BMT 수행/전후 실행 결과 
 
+-------------------------------------------------------------------------------------------------------------------
+
 ## 2. 성능 모니터링 준비 <a id="ch-1-2"></a>
 
 * 플랫폼 별 준비 ( Unix, X86 )
@@ -206,6 +210,8 @@ EXEC DBMS_WORKLOAD_REPOSITORY.MODIFY_SNAPSHOT_SETTINGS(RETENTION=>60*24*15,INTER
 SELECT DBID, SNAP_INTERVAL, RETENTION FROM DBA_HIST_WR_CONTROL;
 ```
 
+##############################################################################
+
 # 나. DB 부하 테스트 사전 검증 및 DB 생성
 
    플랫폼 별 준비 ( Unix, X86 )
@@ -220,6 +226,8 @@ SELECT DBID, SNAP_INTERVAL, RETENTION FROM DBA_HIST_WR_CONTROL;
 
 <img src="./images/img842.png" alt="시나리오2" />
 
+-------------------------------------------------------------------------------------------------------------------
+
 ## 2. HW 사전 검증 및 DB 생성 
 
 ### A. BMT 수행 장비 SPEC 검토 및 점검 
@@ -227,9 +235,13 @@ SELECT DBID, SNAP_INTERVAL, RETENTION FROM DBA_HIST_WR_CONTROL;
 ### B. 스토리지 IOPS 테스트 (ORION) / IOPS baseline <a id="ch-2-2"></a>
 ORION 을 활용한 스토리지 IOPS 테스트
 
+-------------------------------------------------------------------------------------------------------------------
+
 ## 3. 기본 DB 생성  <a id="ch-2-3"></a>
 * CDB
 * 2개 PDB 생성
+
+##############################################################################
 
 # 다. DB 부하 테스트 - 성능
 
@@ -283,10 +295,13 @@ $SB_HOME/bin/sbutil -soe -u soe10 -p soe10 -cs //racnode-scan/orclpdb -stats
 $SB_HOME/bin/sbutil -sh -u sh10 -p sh10 -cs //racnode-scan/orclpdb -stats
 ```
 
+-------------------------------------------------------------------------------------------------------------------
+
 ## 2. DB I/O 테스트 <a id="ch-3-2"></a>
 
 ### A. SLOB 로 DB 테스트 
 
+-------------------------------------------------------------------------------------------------------------------
 
 ## 3.  Workload 별, VU 별 성능 테스트 <a id="ch-3-3"></a>
 
@@ -350,8 +365,12 @@ cd /home/oracle/swingbench/x86
 date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u sh10    -p sh10     -r ../x86/sh_scale010_050user_$(date +"%Y%m%d").xml   -c ../configs/Sales_History.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
 ```
 
+-------------------------------------------------------------------------------------------------------------------
+
 ## 4. 최대부하테스트 <a id="ch-3-4"></a>
 이전 테스트 확인해서 VU 수 조절해서 실행
+
+-------------------------------------------------------------------------------------------------------------------
 
 ## 5. In Memory DB	  <a id="ch-3-5"></a>
 
@@ -359,6 +378,7 @@ date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -
 
 ### B. 질의 성능		
 
+-------------------------------------------------------------------------------------------------------------------
 
 ## 6. 데이터 암호화/질의   <a id="ch-3-6"></a>
 SH10 테이블스페이스를 암호화테이블스페이스로 전화 
@@ -601,6 +621,8 @@ francisco.simpson@comcast.com
 ```
 일반 데이터 파일에서 표시되는 Plain Text 들이 암호화된 데이타 파일에서는 표시되지 않음 
 
+-------------------------------------------------------------------------------------------------------------------
+
 ## 7. 데이터 압축/질의 <a id="ch-3-7"></a>
 
 ### A. 테이블 압축 	
@@ -651,6 +673,8 @@ Compression Ratio
 cd /home/oracle/swingbench/x86
 date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u soe10    -p soe10   -r soe_scale10_50user_compress_$(date +"%Y%m%d").xml    -c ../configs/SOE_Server_Side_V2.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
 ```
+
+-------------------------------------------------------------------------------------------------------------------
 
 ## 8. 백업    <a id="ch-3-4"></a>
 
@@ -867,37 +891,15 @@ $ expdp system@orclpdb parfile=schema.par
 
 #### NETWORK_LINK 
 
-원격 데이타베이스 백업을 받기위한 NETWORK_LINK 사용시 
-FULL_EXP_DATBASE / FULL_IMP_DATABASE ROLE 이 있어야 함
+원격 데이타베이스 백업을 받기위한 NETWORK_LINK 사용시 FULL_EXP_DATBASE / FULL_IMP_DATABASE ROLE 이 있어야 함
 grant exp_full_database to sh10 ; 
 
 DB LINK(Source Database)로 부터 엑스포트
 expdp hoya@orclpdb directory=EXPDIR network_link=DB_LINK_SALES dumpfile=network_export.dmp NOLOGFILE=yes
 
-
 network_link 파라미터 용 tns 및 db 링크 설정(19c)
 
-$ cat $ORACLE_HOME/network/admin/tnsnames.ora
-oralink =
-  (DESCRIPTION =
-    (ADDRESS = (PROTOCOL = TCP)(HOST = ora11)(PORT = 1521))
-    (CONNECT_DATA =
-      (SERVER = DEDICATED)
-      (SERVICE_NAME = orcl)
-    )
-  )
- 
-SQL> create database link ora11g connect to dumpuser identified by dumpuser using 'oralink';
- 
-Database link created.
- 
-SQL> select version from v$instance@ora11g;
- 
-VERSION
------------------
-11.2.0.4.0
-
-
+##############################################################################
 
 # 라. 가용성 / 안정성
 		
@@ -909,10 +911,13 @@ VERSION
 
 ### C. DBMS Process 장애
 
+-------------------------------------------------------------------------------------------------------------------
+
 ## 2.장시간 운영   <a id="ch-4-1"></a>
 
 고정부하로 운영	
 
+##############################################################################
 
 # 마. 부하테스트 결과 수집  
 
@@ -947,6 +952,9 @@ DB 노드별로 리포트 서버로 복사해옴
 [oracle@ora19 input]$ scp -r root@racnode1:/opt/oracle.ahf/tfa/ext/oswbb/archive racnode1-osw
 [oracle@ora19 input]$ scp -r root@racnode2:/opt/oracle.ahf/tfa/ext/oswbb/archive racnode2-osw
 ```
+
+-------------------------------------------------------------------------------------------------------------------
+
 ## 2. DB 노드의 AWR 자료 수집 <a id="ch-5-2"></a>
 각 DB Node 들에서 취합됨 
 
@@ -985,6 +993,10 @@ Visual-AWR 분석을 위해 input 디렉토리 밑에 서버별로 저장
 /home/oracle/visual-awr/input/racnode1
 /home/oracle/visual-awr/input/racnode2
 ```
+
+##############################################################################
+
+
 # 바. 부하테스트 결과 보고 및 분석
 
 ## 1.  부하용 VM <a id="ch-6-1"></a>
@@ -992,11 +1004,14 @@ Visual-AWR 분석을 위해 input 디렉토리 밑에 서버별로 저장
 ### OS 자원/성능 (네트워크 포함) 정보 
 : dstat output file ( dstat_$(date +"%Y%m%d").txt )
 
+-------------------------------------------------------------------------------------------------------------------
+
 ## 2. DB 노드 <a id="ch-6-2"></a>
 
 ### Visual-AWR HTML 결과 확인 
 <visual-awr>/html/report/ 아래 생성된 HTML 리포트를 구글 크롬 (강력 권장) 으로 열어본다.
 
+##############################################################################
 
 # 사. Appendix 
 
@@ -1126,6 +1141,8 @@ export PATH=$ORACLE_HOME/bin:/home/oracle/sqlcl/bin:$ORACLE_HOME/perl/bin:$BASE_
 export SB_HOME=/home/oracle/swingbench
 ```
 
+-------------------------------------------------------------------------------------------------------------------
+
 ## 2. SSH User Equivalence Configuration <a id="ch-7-2"></a>
 
 ### A. Manual Key-Based Authentication 
@@ -1166,6 +1183,8 @@ ssh racnode2 date
 
 $ ./sshUserSetup.sh 
 
+-------------------------------------------------------------------------------------------------------------------
+
 ## 3. 일반 사용자로 sudo 사용 ( 패스워드없이 )<a id="ch-7-3"></a>
 
 ```bash
@@ -1174,6 +1193,8 @@ vi /etc/sudoers
 root 		ALL=(ALL)  ALL
 oracle       ALL=(ALL)       NOPASSWD: ALL
 ```
+
+-------------------------------------------------------------------------------------------------------------------
 
 ## 4. Oracle Linux 7에서 로컬 yum repository 설정<a id="ch-7-4"></a>
 * 관리원은 DB 서버에서 outbound network 차단
@@ -1215,6 +1236,8 @@ gpgcheck=0
 # yum repolist
 # yum install python3
 ```
+
+-------------------------------------------------------------------------------------------------------------------
 
 ## 5. HammerDB 부하테스트<a id="ch-7-5"></a>
 * Swingbench 또는 HammerDB 로 Oracle DB 부하 테스트
@@ -1378,6 +1401,8 @@ vudestroy success
 TEST SEQUENCE COMPLETE
 
 hammerdb>
+
+-------------------------------------------------------------------------------------------------------------------
 
 ## 6. ODA X82HA 의 Database Shape 별 성능 수치 자료<a id="ch-7-6"></a>
 이 자료를 ODA X8-2 HA 장비의 BMT 성능 결과로 활용하면 안되며 ( **BMT 결과 아님** )  ODA X8-2 HA 장비에서 제공하는 
