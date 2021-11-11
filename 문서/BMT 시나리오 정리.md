@@ -374,9 +374,244 @@ date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -
 
 ## 5. In Memory DB	  <a id="ch-3-5"></a>
 
+### A. Oracle In Memory Base Level 활성화 
+
+Oracle In Memory Base Level 설정으로 Instance 당 16GB 무료로 사용가능 
+
+My Oracle Support 에서 제공하는 In-Memory Advisor 를 활용해 데이타베이스 운영 정보인 AWR, ASH 등을 이용해 
+현재 운영중인 최적의 In Memory 적용의 성능 효과를 예상할 수 있다.  
+
+Oracle Database In-Memory Advisor (Doc ID 1965343.1)
+
+#### 1). In Memory Advisor 설치 
+
+* imadvisor.zip 압축 파일 해제
+```bash
+[oracle@racnode1 imadvisor]$ unzip /tmp/imadvisor.zip
+Archive:  /tmp/imadvisor.zip
+  inflating: instimadv.sql
+  inflating: imadvisor_commoncode.sql
+.
+  inflating: prvtimadv_noncdbroot.plb
+  inflating: prvtimadv_cdbroot.plb
+  inflating: prvsimadvprvt11.plb
+  inflating: prvsimadvprvt12.plb
+[oracle@racnode1 imadvisor]$
+```
+```sql
+[oracle@racnode1 imadvisor]$ sqlplus / as sysdba
+
+SQL> @instimadv.sql
+Welcome to the Oracle Database In-Memory Advisor (DBMS_INMEMORY_ADVISOR)
+installation.
+
+Enter value for permanent_tablespace: **SYSTEM**
+
+Enter value for temporary_tablespace: **TEMP**
+
+DBMS_INMEMORY_ADVISOR installation and setup complete.
+
+To uninstall:
+
+SQL>
+```
+
+#### 2). In Memory Advisor 실행 
+
+```sql
+SQL> @imadvisor_recommendations.sql
+
+This script creates and runs an In-Memory Advisor task that analyzes
+your workload to determine an optimal In-Memory configuration.
+
+
+Enter value for task_name: **my_task1**
+
+Enter value for pdb_name: **orclpdb**
+
+Enter value for instance_number: 1
+
+Default begin time: -60
+Enter value for begin_time:
+
+Enter value for duration:
+
+Enter value for consider_objects_like: **SH1.%**
+
+The Advisor estimates the following performance benefits:
+
+
+________________________________________________________________________
+|                                                                      |
+|                                    ESTIMATED      ESTIMATED          |
+|                                    ANALYTICS      ANALYTICS          |
+|                                    PROCESSING    PROCESSING          |
+|                    PERCENTAGE         TIME       PERFORMANCE         |
+|         IN-MEMORY  OF MAXIMUM      REDUCTION     IMPROVEMENT         |
+|           SIZE      SGA SIZE       (SECONDS)*      FACTOR*           |
+|         ---------  ----------  ----------------  -----------         |
+|           286.4MB       8            1127          4.8X              |
+|           272.0MB       7            847           2.5X              |
+|           257.7MB       7            847           2.5X              |
+|           243.4MB       6            847           2.5X              |
+|           229.1MB       6            847           2.5X              |
+|           214.8MB       6            847           2.5X              |
+|           200.4MB       5            847           2.5X              |
+|           186.1MB       5            847           2.5X              |
+|           171.8MB       5            847           2.5X              |
+|           157.5MB       4            847           2.5X              |
+|           143.2MB       4            847           2.5X              |
+|           128.9MB       3            847           2.5X              |
+|           114.5MB       3            847           2.5X              |
+|           100.2MB       3            847           2.5X              |
+|           85.91MB       2            847           2.5X              |
+|           71.59MB       2             12           1.0X              |
+|           57.27MB       2             12           1.0X              |
+|           42.95MB       1             12           1.0X              |
+|           28.64MB       1             12           1.0X              |
+|           14.32MB       0             12           1.0X              |
+|                                                                      |
+| *Estimates: The In-Memory Advisor's estimates are useful for making  |
+|  In-Memory decisions.  But they are not precise.  Due to performance |
+|  variations caused by workload diversity, the Advisor's performance  |
+|  estimates are conservatively limited to no more than 10.0X          |
+|  faster.                                                             |
+|                                                                      |
+|______________________________________________________________________|
+
+Choose the In-Memory size you wish for optimization (default=286.4MB):
+300MB
+
+Fetched file: imadvisor_my_task1.html
+Purpose:      recommendation report primary html page
+
+Fetched file: imadvisor_my_task1.sql
+Purpose:      recommendation DDL sqlplus script
+
+You can re-run this task with this script and specify a different an In-Memory
+size.  Re-running a task to optimize for a different In-Memory size is faster
+than creatng and running a new task from scratch.
+```
+
+#### 3). In Memory 설정  
+
+##### Inmemor_size 설정 
+
+SQL> alter system set inmemory_size=300M scope=spfile sid='*';
+
+##### DB 재시작 
+
+[oracle@racnode1 imadvisor]$ srvctl stop db -d orcl
+[oracle@racnode1 imadvisor]$ srvctl start db -d orcl
+
+##### In Memory 설정 확인 
+SQL> show parameter inmem
+
+NAME                                 TYPE        VALUE
+------------------------------------ ----------- ------------------------------
+inmemory_adg_enabled                 boolean     TRUE
+inmemory_automatic_level             string      OFF
+inmemory_clause_default              string
+inmemory_expressions_usage           string      ENABLE
+inmemory_force                       string      DEFAULT
+inmemory_max_populate_servers        integer     7
+inmemory_optimized_arithmetic        string      DISABLE
+inmemory_prefer_xmem_memcompress     string
+inmemory_prefer_xmem_priority        string
+inmemory_query                       string      ENABLE
+inmemory_size                        big integer 512M
+inmemory_trickle_repopulate_servers_ integer     1
+percent
+inmemory_virtual_columns             string      MANUAL
+inmemory_xmem_size                   big integer 0
+optimizer_inmemory_aware             boolean     TRUE
+
+SQL> select * from v$inmemory_area;
+
 ### A. In Memory Column Store Population 		
 
+#### in memory advisor script 활용 
+In Memory Advisor 에서 추천한 Object 확인후 population
+
+```bash
+[oracle@racnode1 imadvisor]$ cat imadvisor_my_task1.sql
+Rem Copyright (c) 2014, 2016, Oracle and/or its affiliates.  All rights reserved.
+ALTER TABLE "SH1"."CUSTOMERS" INMEMORY MEMCOMPRESS FOR QUERY LOW;
+ALTER TABLE "SH1"."SALES" INMEMORY MEMCOMPRESS FOR QUERY LOW;
+ALTER TABLE "SH1"."TIMES" INMEMORY MEMCOMPRESS FOR QUERY LOW;
+```
+
+SQL> @imadvisor_my_task1.sql
+
+SQL> select segment_name, inmemory, inmemory_compression from dba_segments where owner ='SH1' and segment_type='TABLE';
+
+SEGMENT_NAME                             INMEMORY INMEMORY_COMPRESS
+---------------------------------------- -------- -----------------
+PRODUCTS                                 DISABLED
+SUPPLEMENTARY_DEMOGRAPHICS               DISABLED
+SALES                                    ENABLED  FOR QUERY LOW
+CHANNELS                                 DISABLED
+COUNTRIES                                DISABLED
+CUSTOMERS                                ENABLED  FOR QUERY LOW
+PROMOTIONS                               DISABLED
+TIMES                                    ENABLED  FOR QUERY LOW
+
+8 rows selected.
+
+SQL> select table_name, inmemory, inmemory_priority, inmemory_compression, inmemory_distribute, inmemory_duplicate from dba_tables where owner = 'SH1';
+TABLE_NAME                     INMEMORY INMEMORY INMEMORY_COMPRESS INMEMORY_DISTRI INMEMORY_DUPL
+------------------------------ -------- -------- ----------------- --------------- -------------
+CHANNELS                       DISABLED
+COUNTRIES                      DISABLED
+CUSTOMERS                      ENABLED  NONE     FOR QUERY LOW     AUTO            NO DUPLICATE
+PROMOTIONS                     DISABLED
+PRODUCTS                       DISABLED
+SUPPLEMENTARY_DEMOGRAPHICS     DISABLED
+SALES                          ENABLED  NONE     FOR QUERY LOW     AUTO            NO DUPLICATE
+TIMES                          ENABLED  NONE     FOR QUERY LOW     AUTO            NO DUPLICATE
+
+8 rows selected.
+
+SQL> select segment_name, bytes, inmemory_size, populate_status, bytes_not_populated from v$im_segments where owner='SH1';
+
+no rows selected
+
+#### 수동 population
+
+execute dbms_inmemory.populate('SH1','CUSTOMERS');
+execute dbms_inmemory.populate('SH1','SALES');
+execute dbms_inmemory.populate('SH1','TIMES');
+
+SQL> select segment_name, bytes, inmemory_size, populate_status, bytes_not_populated from v$im_segments where owner='SH1';
+
+SEGMENT_NAME                                  BYTES INMEMORY_SIZE POPULATE_STAT BYTES_NOT_POPULATED
+---------------------------------------- ---------- ------------- ------------- -------------------
+CUSTOMERS                                 354320384      22282240 COMPLETED               240836608
+SALES                                     938180608     167641088 COMPLETED               438968320
+
+SQL> select round(sum(inmemory_size)/1024/1024/1024,3) as gb from v$im_segments where owner = 'SH1';
+
+        GB
+----------
+      .177
+
+
+#### 통계정보 갱신
+SQL> exec dbms_stats.gather_schema_stats(ownname=>'SH1',estimate_percent=>100,degree=>4);
+
+
 ### B. 질의 성능		
+
+#### DB 부하테스트 전 shared pool 초기화 
+
+SQL> alter system flush shared_pool;
+
+#### Swingbench 수행 
+
+```bash
+cd /home/oracle/swingbench/x86
+date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u sh1    -p sh1     -r ../x86/sh_scale001_050user_$(date +"%Y%m%d").xml   -c ../configs/Sales_History.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
+```
 
 -------------------------------------------------------------------------------------------------------------------
 
