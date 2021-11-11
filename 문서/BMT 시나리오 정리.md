@@ -249,20 +249,28 @@ ORION 을 활용한 스토리지 IOPS 테스트
 
 ### A. 테이블스페이스 생성
 
-### B. SOE 초기 데이터 구축
+set timing on
+CREATE BIGFILE TABLESPACE BMT_DATA_100G DATAFILE '+DATA'  SIZE 100G AUTOEXTEND ON EXTENT MANAGEMENT LOCAL AUTOALLOCATE  SEGMENT SPACE MANAGEMENT AUTO;
+CREATE BIGFILE TABLESPACE BMT_DATA_150G DATAFILE '+DATA'  SIZE 150G AUTOEXTEND ON EXTENT MANAGEMENT LOCAL AUTOALLOCATE  SEGMENT SPACE MANAGEMENT AUTO;
+CREATE BIGFILE TABLESPACE BMT_DATA_200G DATAFILE '+DATA'  SIZE 200G AUTOEXTEND ON EXTENT MANAGEMENT LOCAL AUTOALLOCATE  SEGMENT SPACE MANAGEMENT AUTO;
 
-각 Schema 생성 결과물도 저장 
+### B. SOE 초기 데이터 구축  
 
 ```bash
-# date; $SB_HOME/bin/oewizard -cl -u soe10  -p soe10    -cs //racnode-scan/orclpdb -dbap oracle -drop   -c oewizard.xml ; date
+# sample
 date; $SB_HOME/bin/oewizard -cl -scale   10 -ts SOE10   -u soe10   -p soe10  -tc 16  -nopart -df +DATA  -cs //racnode-scan/orclpdb -dbap oracle -create -c oewizard.xml ; date
+
+# date; $SB_HOME/bin/oewizard -cl -u soe200  -p soe200    -cs //racnode-scan/orclpdb -dbap oracle -drop   -c oewizard.xml ; date
+date; $SB_HOME/bin/oewizard -cl -scale   200 -ts SOE200   -u soe200   -p soe200  -tc 32  -part -df +DATA  -cs //racnode-scan/orclpdb -dbap oracle -create -c oewizard.xml ; date
 ```
 
 ### C. SH 초기 데이터 구축
 
 ```bash
-# date; $SB_HOME/bin/shwizard -cl -u sh10    -p sh10     -cs //racnode-scan/orclpdb -dbap oracle -drop   -c shwizard.xml ; date
-date; $SB_HOME/bin/shwizard -cl -scale   10 -ts SH10    -u sh10    -p sh10                    -df +DATA   -cs //racnode-scan/orclpdb -dbap oracle -create -c shwizard.xml ; date
+# sample
+date; $SB_HOME/bin/shwizard -cl -scale  10 -ts SH10    -u sh10    -p sh10                    -df +DATA   -cs //racnode-scan/orclpdb -dbap oracle -create -c shwizard.xml ; date
+# date; $SB_HOME/bin/shwizard -cl -u sh200    -p sh200     -cs //racnode-scan/orclpdb -dbap oracle -drop   -c shwizard.xml ; date
+date; $SB_HOME/bin/shwizard -cl -scale  200 -ts SH200    -u sh200    -p sh200                    -df +DATA   -cs //racnode-scan/orclpdb -dbap oracle -create -c shwizard.xml ; date
 ```
 >
 >Option : 
@@ -299,7 +307,189 @@ $SB_HOME/bin/sbutil -sh -u sh10 -p sh10 -cs //racnode-scan/orclpdb -stats
 
 ## 2. DB I/O 테스트 <a id="ch-3-2"></a>
 
+SLOB 또는 dominicgiles 의 Data Generator 를 이용
+
 ### A. SLOB 로 DB 테스트 
+
+#### 1). 다운로드
+https://kevinclosson.net/slob/
+
+#### 2). slob.conf 설정 파일 
+
+```bash
+[oracle@ora19 SLOB]$ cat slob.conf
+#### SLOB 2.5.4.0 slob.conf
+
+UPDATE_PCT=20
+SCAN_PCT=0
+RUN_TIME=120
+WORK_LOOP=0
+SCALE=10000
+SCAN_TABLE_SZ=1M
+WORK_UNIT=64
+REDO_STRESS=LITE
+LOAD_PARALLEL_DEGREE=2
+
+THREADS_PER_SCHEMA=1
+
+DATABASE_STATISTICS_TYPE=awr   # Permitted values: [statspack|awr]
+
+<생략>
+
+#### Settings for SQL*Net connectivity:
+#### Uncomment the following if needed:
+ADMIN_SQLNET_SERVICE="ORCLPDB"
+SQLNET_SERVICE_BASE="ORCLPDB"
+#SQLNET_SERVICE_MAX="if needed, replace with a non-zero integer"
+#
+
+DBA_PRIV_USER="system"
+SYSDBA_PASSWD="oracle"
+
+#### The EXTERNAL_SCRIPT parameter is used by the external script calling feature of runit.sh.
+#### Please see SLOB Documentation at https://kevinclosson.net/slob for more information
+
+EXTERNAL_SCRIPT="/home/oracle/SLOB/misc/cdb_external_script.sh"
+
+<생략)
+
+#### The following controls operations on Hot Schema
+#### Default Value: 0. Default setting disables Hot Schema
+
+HOT_SCHEMA_FREQUENCY=0
+
+#### The following parameters control think time between SLOB
+#### operations (SQL Executions).
+#### Setting the frequency to 0 disables think time.
+
+THINK_TM_FREQUENCY=0
+THINK_TM_MIN=.1
+THINK_TM_MAX=.5
+
+[oracle@ora19 SLOB]$
+
+```
+
+#### 3). SLOB 용 테이블스페이스 생성
+
+sqlplus system/oracle@orclpdb
+SQL > @./misc/ts
+
+#### setup.sh 실행
+
+setup.sh IOPS 5
+
+#### 사용자의 스키마 확인
+
+##### 1. setup.sh 실행전
+
+* slob.conf 수정 
+```bash
+ADMIN_SQLNET_SERVICE="ORCLPDB"
+SQLNET_SERVICE_BASE="ORCLPDB"
+DBA_PRIV_USER="system"
+SYSDBA_PASSWD="oracle"
+```
+
+#### runit.sh 실행
+
+```bash
+[oracle@269a158eeda0 SLOB]$ ./runit.sh 2
+NOTIFY  : 2021.11.07-13:58:15 : For security purposes all file and directory creation and deletions
+NOTIFY  : 2021.11.07-13:58:15 : performed by ./runit.sh are logged in: /home/oracle/SLOB/.file_operations_audit_trail.out.
+NOTIFY  : 2021.11.07-13:58:15 : SLOB TEMPDIR is /tmp/.SLOB.2021.11.07.135815. SLOB will delete this directory at the end of this execution.
+NOTIFY  : 2021.11.07-13:58:15 : Sourcing in slob.conf
+NOTIFY  : 2021.11.07-13:58:15 : Performing initial slob.conf sanity check...
+NOTIFY  : 2021.11.07-13:58:15 :
+NOTIFY  : 2021.11.07-13:58:15 : All SLOB sessions will connect to ORCLPDB via SQL*Net.
+NOTIFY  : 2021.11.07-13:58:15 : Connecting to the instance to validate slob.conf->SCALE setting.
+
+UPDATE_PCT: 20
+SCAN_PCT: 0
+RUN_TIME: 120
+WORK_LOOP: 0
+SCALE: 10000 (10000 blocks)
+WORK_UNIT: 64
+REDO_STRESS: LITE
+HOT_SCHEMA_FREQUENCY: 0
+HOTSPOT_MB: 8
+HOTSPOT_OFFSET_MB: 16
+HOTSPOT_FREQUENCY: 3
+THINK_TM_FREQUENCY: 0
+THINK_TM_MIN: .1
+THINK_TM_MAX: .5
+DATABASE_STATISTICS_TYPE: awr
+SYSDBA_PASSWD: "oracle"
+DBA_PRIV_USER: "system"
+ADMIN_SQLNET_SERVICE: "ORCLPDB"
+SQLNET_SERVICE_BASE: "ORCLPDB"
+SQLNET_SERVICE_MAX: ""
+
+..
+
+NOTIFY  : 2021.11.07-14:00:36 : Run time 121 seconds.
+NOTIFY  : 2021.11.07-14:00:36 : Executing external script defined in slob.conf (/home/oracle/SLOB/misc/cdb_external_script.sh). Invocation is: "sh /home/oracle/SLOB/misc/cdb_external_script.sh post"
+NOTIFY  : 2021.11.07-14:00:36 : Executing awr "after snap" procedure. Command: "sqlplus -S -L system/oracle@ORCLPDB".
+NOTIFY  : 2021.11.07-14:00:48 : After awr snap ID is 27
+NOTIFY  : 2021.11.07-14:00:48 : Terminating background data collectors.
+./runit.sh: line 119: 12902 Killed                  ( iostat -t -xm 3 > iostat.out 2>&1 )
+./runit.sh: line 119: 12904 Killed                  ( mpstat -P ALL 3 > mpstat.out 2>&1 )
+./runit.sh: line 1547: 12903 Killed                  ( vmstat -t 3 > vmstat.out 2>&1 )
+NOTIFY  : 2021.11.07-14:01:15 :
+NOTIFY  : 2021.11.07-14:01:15 : SLOB test is complete.
+NOTIFY  : 2021.11.07-14:01:15 : Executing external script defined in slob.conf (/home/oracle/SLOB/misc/cdb_external_script.sh). Invocation is: "sh /home/oracle/SLOB/misc/cdb_external_script.sh end"
+NOTIFY  : 2021.11.07-14:01:15 : Cleaning up SLOB temporary directory (/tmp/.SLOB.2021.11.07.135815).
+[oracle@269a158eeda0 SLOB]$ ls -l awr
+awr/         awr.html.gz  awr.txt      awr_rac.txt
+```
+
+#### 4) SLOB 실행시 오류 처리 
+
+##### tnsping 에러 처리
+
+##### Multitenant 에러 
+http://tobinotes.blogspot.com/2019/08/running-slob-on-oracle-pluggable.html
+
+##### AWR Snapshot 문제 
+
+```bash
+external_script.sh
+
+[oracle@269a158eeda0 SLOB]$ cat misc/cdb_external_script.sh
+#!/bin/bash
+
+case "$1" in
+        pre) :
+sqlplus SYSTEM/oracle@orcl <<EOF
+spool cdb_external_script.log
+SET TIME ON
+EXEC DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT;
+
+EXIT
+
+EOF
+;;
+        post) :
+sqlplus SYSTEM/oracle@orcl <<EOF
+spool cdb_external_script.log
+SET TIME ON
+EXEC DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT;
+
+EXIT
+
+EOF
+;;
+        end) : ;;
+esac
+
+exit 0
+```
+
+##### WAIT_KIT Compile 
+
+### B. dominicgiles.com 의 Data Generator 
+
+[Data Generator 다운로드](http://www.dominicgiles.com/swingbench/datageneratorlatest.zip)
 
 -------------------------------------------------------------------------------------------------------------------
 
@@ -324,19 +514,37 @@ Unix, X86 결과 파일은 따로 저장
 
 ##### charbench 수행
 
+실행시간은 조절 -rt 00:30
+
+* VU 200 / 400 / 600
 ```bash
 cd /home/oracle/swingbench/x86
-date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u soe10    -p soe10   -r ../x86/soe_scale10_50user_$(date +"%Y%m%d").xml    -c ../configs/SOE_Server_Side_V2.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
+date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u soe200    -p soe200   -r ../x86/soe_scale200_50user_$(date +"%Y%m%d").xml    -c ../configs/SOE_Server_Side_V2.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
+
+date; $SB_HOME/bin/charbench -uc  200  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u soe200    -p soe200   -r ../x86/soe_scale200_200user_$(date +"%Y%m%d").xml    -c ../configs/SOE_Server_Side_V2.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
+
+date; $SB_HOME/bin/charbench -uc  400  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u soe200    -p soe200   -r ../x86/soe_scale200_400user_$(date +"%Y%m%d").xml    -c ../configs/SOE_Server_Side_V2.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
+
+date; $SB_HOME/bin/charbench -uc  600  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u soe200    -p soe200   -r ../x86/soe_scale200_600user_$(date +"%Y%m%d").xml    -c ../configs/SOE_Server_Side_V2.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
+
+
 ```
 
 ### B. 배치 트랜잭션	
 
 #### 1) SH 부하 수행 
 
+실행시간은 조절 -rt 00:30
+
 ##### 1) charbench 수행 
 ```bash
 cd /home/oracle/swingbench/x86
-date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u sh10    -p sh10     -r ../x86/sh_scale010_050user_$(date +"%Y%m%d").xml   -c ../configs/Sales_History.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
+date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u sh200    -p sh200     -r ../x86/sh_scale200_050user_$(date +"%Y%m%d").xml   -c ../configs/Sales_History.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
+
+date; $SB_HOME/bin/charbench -uc  100  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u sh200    -p sh200     -r ../x86/sh_scale200_100user_$(date +"%Y%m%d").xml   -c ../configs/Sales_History.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
+
+date; $SB_HOME/bin/charbench -uc  200  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u sh200    -p sh200     -r ../x86/sh_scale200_200user_$(date +"%Y%m%d").xml   -c ../configs/Sales_History.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
+
 ```
 >Option : 
 >1. -be / -bs 
@@ -354,15 +562,17 @@ date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -
 
 이전 테스트 확인해서 VU 수 조절해서 두개의 terminal 을 열어 각각 실행
 
+실행시간은 조절 -rt 00:30
+
 * Terminal 1
 ```bash
 cd /home/oracle/swingbench/x86
-date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u soe10    -p soe10   -r ../x86/soe_scale10_50user_$(date +"%Y%m%d").xml    -c ../configs/SOE_Server_Side_V2.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
+date; $SB_HOME/bin/charbench -uc  300  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u soe200    -p soe200   -r ../x86/soe_scale200_300user_$(date +"%Y%m%d").xml    -c ../configs/SOE_Server_Side_V2.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
 ```
 * Terminal 2
 ```bash
 cd /home/oracle/swingbench/x86
-date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u sh10    -p sh10     -r ../x86/sh_scale010_050user_$(date +"%Y%m%d").xml   -c ../configs/Sales_History.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
+date; $SB_HOME/bin/charbench -uc  100  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u sh200    -p sh200     -r ../x86/sh_scale200_100user_$(date +"%Y%m%d").xml   -c ../configs/Sales_History.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
 ```
 
 -------------------------------------------------------------------------------------------------------------------
