@@ -496,15 +496,16 @@ than creatng and running a new task from scratch.
 #### 3). In Memory 설정  
 
 ##### Inmemor_size 설정 
-
+```sql
 SQL> alter system set inmemory_size=300M scope=spfile sid='*';
-
+```
 ##### DB 재시작 
-
+```bash
 [oracle@racnode1 imadvisor]$ srvctl stop db -d orcl
 [oracle@racnode1 imadvisor]$ srvctl start db -d orcl
-
+```
 ##### In Memory 설정 확인 
+```sql
 SQL> show parameter inmem
 
 NAME                                 TYPE        VALUE
@@ -527,6 +528,7 @@ inmemory_xmem_size                   big integer 0
 optimizer_inmemory_aware             boolean     TRUE
 
 SQL> select * from v$inmemory_area;
+```
 
 ### A. In Memory Column Store Population 		
 
@@ -540,7 +542,7 @@ ALTER TABLE "SH1"."CUSTOMERS" INMEMORY MEMCOMPRESS FOR QUERY LOW;
 ALTER TABLE "SH1"."SALES" INMEMORY MEMCOMPRESS FOR QUERY LOW;
 ALTER TABLE "SH1"."TIMES" INMEMORY MEMCOMPRESS FOR QUERY LOW;
 ```
-
+```sql
 SQL> @imadvisor_my_task1.sql
 
 SQL> select segment_name, inmemory, inmemory_compression from dba_segments where owner ='SH1' and segment_type='TABLE';
@@ -575,12 +577,14 @@ TIMES                          ENABLED  NONE     FOR QUERY LOW     AUTO         
 SQL> select segment_name, bytes, inmemory_size, populate_status, bytes_not_populated from v$im_segments where owner='SH1';
 
 no rows selected
+```
 
 #### 수동 population
 
-execute dbms_inmemory.populate('SH1','CUSTOMERS');
-execute dbms_inmemory.populate('SH1','SALES');
-execute dbms_inmemory.populate('SH1','TIMES');
+```sql
+SQL> execute dbms_inmemory.populate('SH1','CUSTOMERS');
+SQL> execute dbms_inmemory.populate('SH1','SALES');
+SQL> execute dbms_inmemory.populate('SH1','TIMES');
 
 SQL> select segment_name, bytes, inmemory_size, populate_status, bytes_not_populated from v$im_segments where owner='SH1';
 
@@ -594,17 +598,19 @@ SQL> select round(sum(inmemory_size)/1024/1024/1024,3) as gb from v$im_segments 
         GB
 ----------
       .177
-
+```
 
 #### 통계정보 갱신
+```sql
 SQL> exec dbms_stats.gather_schema_stats(ownname=>'SH1',estimate_percent=>100,degree=>4);
-
+```
 
 ### B. 질의 성능		
 
 #### DB 부하테스트 전 shared pool 초기화 
-
+```sql
 SQL> alter system flush shared_pool;
+```
 
 #### Swingbench 수행 
 
@@ -1245,6 +1251,17 @@ Visual-AWR 분석을 위해 input 디렉토리 밑에 서버별로 저장
 
 ### Visual-AWR HTML 결과 확인 
 <visual-awr>/html/report/ 아래 생성된 HTML 리포트를 구글 크롬 (강력 권장) 으로 열어본다.
+
+#### Visual-AWR 의 DB DB AWR 취합 리포트
+
+<img src="./images/img900.png" alt="Visual-AWR1" /></p>
+<img src="./images/img901.png" alt="Visual-AWR2" /></p>
+<img src="./images/img902.png" alt="Visual-AWR3" /></p>
+
+#### Visual-AWR 의 각 node 의 OSWatcher 리포트
+
+<img src="./images/img910osw.png" alt="Visual-AWR-OSW" /></p>
+
 
 ##############################################################################
 
