@@ -3,13 +3,18 @@
 # 목차 
 
 ### 가. 성능시험 환경 구성 
+----------------------------------
 * [1. 장비 및 SW 환경](#ch-1-1)
 * [2. 성능 모니터링 준비](#ch-1-2)
+
 ### 나. DB 부하 테스트 사전 검증 및 DB 생성
+------------------------------------------------------
 * [1. 부하테스트 시나리오](#ch-2-1)
 * [2. 스토리지 IOPS 테스트](#ch-2-2)
 * [3. 기본 DB 생성](#ch-2-3)
+
 ### 다. DB 부하 테스트 - 성능
+-------------------------------------
 * [1. TBS 생성 테스트 초기 데이터 적재](#ch-3-1)
 * [2. DB I/O 테스트](#ch-3-2)
 * [3.  Workload 별, VU 별 성능 테스트](#ch-3-3)
@@ -18,16 +23,24 @@
 * [6. 데이터 암호화/질의](#ch-3-6)
 * [7. 데이터 압축/질의](#ch-3-7)
 * [8. 백업](#ch-3-8)
+
 ### 라. 가용성 / 안정성
+----------------------------
 * [1.클러스터 장애 대처 기능)](#ch-4-1)
 * [2. DB Node의 AWR 자료 취득](#ch-4-2)
+
 ### 마. 부하테스트 결과 수집  
+-----------------------------------
 * [1.부하용 VM (리포트 겸용)](#ch-5-1)
 * [2. DB Node의 AWR 자료 취득)](#ch-5-1)
+
 ### 바. 부하테스트 결과 보고 및 분석
+--------------------------------------------
 * [1. 부하용 VM](#ch-6-1)
 * [2. DB 노드](#ch-6-2)
+
 ### 사. Appendix
+------------------------
 * [1. 환경변수](#ch-7-1)
 * [2. SSH User Equivalence Configuration](#ch-7-2)
 * [3. 일반 사용자로 sudo 사용 ( 패스워드없이 )](#ch-7-3)
@@ -38,12 +51,14 @@
 ##############################################################################
 
 # 가. 성능시험 환경 구성 
+--------------------------------
 <img src="./images/img839.png" alt="BMT환경" />
 
 ## 1. 장비 및 SW 환경 <a id="ch-1-1"></a>
-
+---------------------------------------------------
 
 ### A. 부하용 vm ( RHEL 7.9 또는 OL 7.9 ) ( Report 용도 포함 )
+------------------------------------------------------------------------
 
 #### 1) python3 & pip3 설치 
 
@@ -106,6 +121,7 @@ swingbench/launcher/launcher.xml
 ```
 
 ### B. DB 서버  ( Oracle 19.13 RAC ) 
+---------------------------------------------
 
 #### 1) 장비별 OS
  * X86 (VMware 7) OL 7.9 (UEK)
@@ -143,10 +159,12 @@ BMT 수행/전후 실행 결과
 -------------------------------------------------------------------------------------------------------------------
 
 ## 2. 성능 모니터링 준비 <a id="ch-1-2"></a>
+------------------------------------------------------
 
 * 플랫폼 별 준비 ( Unix, X86 )
 
 ### A. 부하용 vm 성능 모니터링
+--------------------------------------
 
 ```bash
 dstat -t -cmgdrnlyp -N total  --output dstat_$(date +"%Y%m%d").txt 
@@ -155,6 +173,7 @@ nohup dstat -t -cmgdrnlyp -N total  --output dstat_$(date +"%Y%m%d").txt &
 ```
 
 ### B. DB서버용 성능 모니터링
+-------------------------------------
 
 #### 1) OSWatcher
 AHF 내에 포함되어 있으며 root 계정으로 실행을 권장
@@ -213,41 +232,51 @@ SELECT DBID, SNAP_INTERVAL, RETENTION FROM DBA_HIST_WR_CONTROL;
 ##############################################################################
 
 # 나. DB 부하 테스트 사전 검증 및 DB 생성
+---------------------------------------------------
 
    플랫폼 별 준비 ( Unix, X86 )
 
 ## 1. 부하테스트 시나리오 <a id="ch-2-1"></a>
+-----------------------------------------------------------
 
 ### A. 부하테스트 시나리오 1 
-
+-------------------------------------
 <img src="./images/img841.png" alt="시나리오1" />
 
 ### B. 부하테스트 시나리오 2 
-
+-----------------------------------
 <img src="./images/img842.png" alt="시나리오2" />
 
 -------------------------------------------------------------------------------------------------------------------
 
 ## 2. HW 사전 검증 및 DB 생성 
+-------------------------------------
 
 ### A. BMT 수행 장비 SPEC 검토 및 점검 
+------------------------------------------------
  
 ### B. 스토리지 IOPS 테스트 (ORION) / IOPS baseline <a id="ch-2-2"></a>
+----------------------------------------------------------------
 ORION 을 활용한 스토리지 IOPS 테스트
 
 -------------------------------------------------------------------------------------------------------------------
 
 ## 3. 기본 DB 생성  <a id="ch-2-3"></a>
+-------------------------------------------------
+
 * CDB
 * 2개 PDB 생성
 
 ##############################################################################
 
 # 다. DB 부하 테스트 - 성능
+------------------------------------
 
 ## 1. TBS 생성 테스트 초기 데이터 적재 <a id="ch-3-1"></a>
+-------------------------------------------------
 
 ### A. 테이블스페이스 생성
+----------------------------------
 
 set timing on
 CREATE BIGFILE TABLESPACE BMT_DATA_100G DATAFILE '+DATA'  SIZE 100G AUTOEXTEND ON EXTENT MANAGEMENT LOCAL AUTOALLOCATE  SEGMENT SPACE MANAGEMENT AUTO;
@@ -255,21 +284,23 @@ CREATE BIGFILE TABLESPACE BMT_DATA_150G DATAFILE '+DATA'  SIZE 150G AUTOEXTEND O
 CREATE BIGFILE TABLESPACE BMT_DATA_200G DATAFILE '+DATA'  SIZE 200G AUTOEXTEND ON EXTENT MANAGEMENT LOCAL AUTOALLOCATE  SEGMENT SPACE MANAGEMENT AUTO;
 
 ### B. SOE 초기 데이터 구축  
+-----------------------------------
 
 ```bash
 # sample
 date; $SB_HOME/bin/oewizard -cl -scale   10 -ts SOE10   -u soe10   -p soe10  -tc 16  -nopart -df +DATA  -cs //racnode-scan/orclpdb -dbap oracle -create -c oewizard.xml ; date
 
-# date; $SB_HOME/bin/oewizard -cl -u soe200  -p soe200    -cs //racnode-scan/orclpdb -dbap oracle -drop   -c oewizard.xml ; date
+# date; $SB_HOME/bin/oewizard -cl -u soe200  -p soe200   -ts soe200 -cs //racnode-scan/orclpdb -dbap oracle -drop   -c oewizard.xml ; date
 date; $SB_HOME/bin/oewizard -cl -scale   200 -ts SOE200   -u soe200   -p soe200  -tc 32  -part -df +DATA  -cs //racnode-scan/orclpdb -dbap oracle -create -c oewizard.xml ; date
 ```
 
 ### C. SH 초기 데이터 구축
+----------------------------------
 
 ```bash
 # sample
 date; $SB_HOME/bin/shwizard -cl -scale  10 -ts SH10    -u sh10    -p sh10                    -df +DATA   -cs //racnode-scan/orclpdb -dbap oracle -create -c shwizard.xml ; date
-# date; $SB_HOME/bin/shwizard -cl -u sh200    -p sh200     -cs //racnode-scan/orclpdb -dbap oracle -drop   -c shwizard.xml ; date
+# date; $SB_HOME/bin/shwizard -cl -u sh200    -p sh200   -ts sh200  -cs //racnode-scan/orclpdb -dbap oracle -drop   -c shwizard.xml ; date
 date; $SB_HOME/bin/shwizard -cl -scale  200 -ts SH200    -u sh200    -p sh200                    -df +DATA   -cs //racnode-scan/orclpdb -dbap oracle -create -c shwizard.xml ; date
 ```
 >
@@ -286,6 +317,7 @@ date; $SB_HOME/bin/shwizard -cl -scale  200 -ts SH200    -u sh200    -p sh200   
 >ETC. -constraints, -debug, -generate, -idf, -its, -ro, -sp
 
 ### D. sbutil 사용법 로 invalid object / table 통계 확인
+-----------------------------------------------------------------
 
 #### 1) Invalid Object 확인 
 ```bash
@@ -302,14 +334,16 @@ $SB_HOME/bin/sbutil -sh  -u sh10  -p sh10  -cs //racnode-scan/orclpdb -tables
 $SB_HOME/bin/sbutil -soe -u soe10 -p soe10 -cs //racnode-scan/orclpdb -stats
 $SB_HOME/bin/sbutil -sh -u sh10 -p sh10 -cs //racnode-scan/orclpdb -stats
 ```
-
+$SB_HOME/bin/sbutil -sh -u sh1 -p sh1 -cs //racnode-scan/orclpdb -stats
 -------------------------------------------------------------------------------------------------------------------
 
 ## 2. DB I/O 테스트 <a id="ch-3-2"></a>
+--------------------------------------------
 
 SLOB 또는 dominicgiles 의 Data Generator 를 이용
 
 ### A. SLOB 로 DB 테스트 
+---------------------------------
 
 #### 1). 다운로드
 https://kevinclosson.net/slob/
@@ -460,7 +494,7 @@ external_script.sh
 
 case "$1" in
         pre) :
-sqlplus SYSTEM/oracle@orcl <<EOF
+sqlplus system/oracle@orcl <<EOF
 spool cdb_external_script.log
 SET TIME ON
 EXEC DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT;
@@ -470,7 +504,7 @@ EXIT
 EOF
 ;;
         post) :
-sqlplus SYSTEM/oracle@orcl <<EOF
+sqlplus system/oracle@orcl <<EOF
 spool cdb_external_script.log
 SET TIME ON
 EXEC DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT;
@@ -488,12 +522,214 @@ exit 0
 ##### WAIT_KIT Compile 
 
 ### B. dominicgiles.com 의 Data Generator 
+--------------------------------------------------------
 
+데이터 생성에는 Data Generator 도구 (http://www.dominicgiles.com/datageneratorinstall.html) 사용 
+
+#### 테이블스페이스 및 데이터베이스 사용자 작성 
+```sql
+SQL> create bigfile tablespace test datafile size 1g autoextend on;
+SQL> create user test identified by "test" default tablespace test;
+SQL> grant connect, resource to test;
+SQL> exit
+```
+
+#### Data Generator 다운로드
 [Data Generator 다운로드](http://www.dominicgiles.com/swingbench/datageneratorlatest.zip)
+
+#### Data Generator 설치  
+```bash
+$ mkdir ~/datagen 
+$ cp datagenerator040300.zip ~/datagen 
+$ cd ~/datagen 
+$ unzip datagenerator040300.zip
+```
+
+##### Data Generator 설정 파일
+
+```bash
+<?xml version="1.0" encoding="UTF-8"?> 
+<TableDataGenerator xmlns="http://www.domincgiles.com/datagen">  <DatabaseConnectionInformation> 
+ <Username>test</Username> 
+ <Password>test</Password> 
+ <ConnectString>//racnode-scan:1521/orclpdb</ConnectString> 
+ <DriverType>Oracle11g Type IV jdbc driver (thin)</DriverType>  </DatabaseConnectionInformation> 
+ <Table RowCount="1096478196"> 
+ <TableName>TABLE1</TableName> 
+ <Columns> 
+ <Column> 
+ <ColumnName>COLUMN1</ColumnName> 
+ <DataType>NUMBER</DataType> 
+ <PrimaryKey>true</PrimaryKey> 
+ <NullsAllowed>false</NullsAllowed> 
+ <Size>32</Size> 
+ <PopulateWith> 
+ <DataGenerator> 
+ <NumberGenerator> 
+ <id>DG2</id> 
+ <Start>1</Start> 
+ <End>2000000000</End> 
+ <OrderedSequence>true</OrderedSequence> 
+ <SequenceName>SEQUENCE1</SequenceName> 
+ <PercentageNull>0</PercentageNull> 
+ <LocalSequence>false</LocalSequence> 
+ </NumberGenerator> 
+ </DataGenerator> 
+ </PopulateWith> 
+ </Column> 
+ <Column> 
+ <ColumnName>COLUMN2</ColumnName> 
+ <DataType>NUMBER</DataType> 
+ <PrimaryKey>false</PrimaryKey> 
+ <NullsAllowed>false</NullsAllowed> 
+ <Size>32</Size> 
+ <PopulateWith> 
+ <DataGenerator> 
+ <NumberGenerator> 
+ <id>DG3</id> 
+ <Start>1</Start> 
+ <End>2000000000</End> 
+ <OrderedSequence>false</OrderedSequence> 
+ <PercentageNull>0</PercentageNull> 
+ <LocalSequence>false</LocalSequence> 
+ </NumberGenerator> 
+ </DataGenerator> 
+ </PopulateWith> 
+ </Column>
+<Column> 
+ <ColumnName>COLUMN3</ColumnName> 
+ <DataType>CHAR</DataType> 
+ <PrimaryKey>false</PrimaryKey> 
+ <NullsAllowed>false</NullsAllowed> 
+ <Size>200</Size> 
+ <PopulateWith> 
+ <DataGenerator> 
+ <CharacterGenerator> 
+ <id>DG1</id> 
+ <CharacterClass>Alpha Numeric</CharacterClass>  <MinimumSize>1</MinimumSize> 
+ <MaximumSize>200</MaximumSize> 
+ <PercentageNull>0</PercentageNull> 
+ </CharacterGenerator> 
+ </DataGenerator> 
+ </PopulateWith> 
+ </Column> 
+ <Column> 
+ <ColumnName>COLUMN4</ColumnName> 
+ <DataType>DATE</DataType> 
+ <PrimaryKey>false</PrimaryKey> 
+ <NullsAllowed>false</NullsAllowed> 
+ <Size>200</Size> 
+ <PopulateWith> 
+ <DataGenerator> 
+ <DateGenerator> 
+ <id>DG2</id> 
+ <Start>2013-06-01T04:30:33.734Z</Start>  <End>2015-06-06T04:30:33.734Z</End> 
+ <RoundUpDay>false</RoundUpDay> 
+ <RoundUpHour>false</RoundUpHour> 
+ <AddToResult>0</AddToResult> 
+ <PercentageNull>0</PercentageNull> 
+ </DateGenerator> 
+ </DataGenerator> 
+ </PopulateWith> 
+ </Column> 
+ </Columns> 
+ <Scaleable>true</Scaleable> 
+ </Table> 
+ <Sequence> 
+ <SequenceName>SEQUENCE1</SequenceName> 
+ <StartWith>1</StartWith> 
+ <IncrementBy>1</IncrementBy> 
+ <CacheSize>1000</CacheSize> 
+ <Ordered>false</Ordered> 
+ </Sequence> 
+ <PreGenerationScript/> 
+ <PostGenerationScript> 
+ <DatabaseConnectionInformation> 
+ <Username/> 
+ <Password/> 
+ <ConnectString/> 
+ <DriverType>Oracle10g Type IV jdbc driver (thin)</DriverType>  </DatabaseConnectionInformation> 
+ </PostGenerationScript> 
+</TableDataGenerator>
+```
+
+##### Data Generator 실행 옵션
+```bash
+[oracle@ora19 bin]$ ./datagenerator -h
+usage: parameters:
+
+ -mf <fileSize>          Max file output size. Overides -sp and chunk size
+ -11gplus                enables some 11g/12c and later database  optimisations
+ -async                  perform async commits
+ -bs <batchSize>         batch size of inserts (defaults to 50)
+ -c <filename>           specify config file
+ -cf <file>              the location of a credentials file for Oracle ATP/ADW
+ -ch                     Include csv headers in output when writing files
+ -cl                     use command line interface
+ -commit <commitSize>    number of inserts between commits
+ -cs                     connect string for database insertion
+ -d <directory>          output directory (defaults to "generateddata")
+ -db                     write data direct to database
+ -ddl                    just generate the ddl to be used
+ -debug                  turn on debug information
+ -debugf                 turn on debug information, write to file (debug.log)
+ -debugg                 turn on debug information, write to debug window
+ -df <dateformat>        date format to be used when writing to files
+ -dt                     driver type (oci|thin)
+ -f                      write data to file
+ -g                      use graphical user interface
+ -h,--help               print this message
+ -i                      use insert append (Oracle specific)
+ -nc                     don't create any constraints after data creation
+ -ni                     don't create any indexes after data creation
+ -noddl                  don't run any ddl (overides all ddl settings)
+ -nodg                   don't generate and data just do everything else
+ -nodrop                 don't drop tables if they exist
+ -o <file>               outputfile for character mode (instead of stdout)
+ -p                      password for database connection
+ -r <algorithm>          random generator algorithm (native|mersenne|simple)
+ -ro                     reverse the order in which table data is created (smallest first)
+ -s                      run silent
+ -sc                     run scripts if they exist in config file
+ -scale <scale>          mulitiplier for default config
+ -scpost                 only run the post generation scripts
+ -scpre                  only run the pre generation scripts
+ -sd                     Surround strings with " when writing to files (defaults to none)
+ -sp <soft partitions>   the number of softparitions used. Defaults to cpu count
+ -tc                     number of generation threads (defaults to 2)
+ -trunc                  don't drop tables but truncate them
+ -u                      username for database connection
+ -v                      turn on verbose output in command line mode
+ -z                      compress the results file
+[oracle@ora19 bin]$
+```
+
+##### sh.xml 수정 
+```bash
+$ cd datagenerator/bin
+$ cp -p sh.xml sh.xml.org
+         <Column>
+            <ColumnName>CUST_EMAIL</ColumnName>
+            <DataType>VARCHAR2</DataType>
+            <PrimaryKey>false</PrimaryKey>
+            <NullsAllowed>true</NullsAllowed>
+            <Size>30</Size> ★ Size 를 30에서 50으로 변경
+```
+
+```bash
+$ perl -F, -lane 'print $F[16] if(length($F[16])>30)' CUSTOMERS_124998.csv|head -3
+fletcher.stonebraker@googlemail.com ★ 컬럼 길이가 30를 초과하는 이메일 주소 확인
+fredrick.trowbridge@hotmail.com
+clayton.candelaria@googlemail.com
+```
+
+##### 데이터 생성 
+./datagenerator -cl -db -c sh.xml -debug -cs //racnode-scan:1521/orclpdb -u sh10 -p sh10
 
 -------------------------------------------------------------------------------------------------------------------
 
 ## 3.  Workload 별, VU 별 성능 테스트 <a id="ch-3-3"></a>
+---------------------------------------------
 
 #### 1) Platform 별 결과 저장 디렉토리
 
@@ -509,6 +745,7 @@ Unix, X86 결과 파일은 따로 저장
 ```
 
 ### A. 온라인 트랜잭션	
+-----------------------------
 
 #### 1) SOE 부하 수행 
 
@@ -519,6 +756,10 @@ Unix, X86 결과 파일은 따로 저장
 * VU 200 / 400 / 600
 ```bash
 cd /home/oracle/swingbench/x86
+
+date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u soe1    -p soe1   -r ../x86/soe_scale1_50user_$(date +"%Y%m%d").xml    -c ../configs/SOE_Server_Side_V2.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
+
+
 date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u soe200    -p soe200   -r ../x86/soe_scale200_50user_$(date +"%Y%m%d").xml    -c ../configs/SOE_Server_Side_V2.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
 
 date; $SB_HOME/bin/charbench -uc  200  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u soe200    -p soe200   -r ../x86/soe_scale200_200user_$(date +"%Y%m%d").xml    -c ../configs/SOE_Server_Side_V2.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
@@ -531,6 +772,7 @@ date; $SB_HOME/bin/charbench -uc  600  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -
 ```
 
 ### B. 배치 트랜잭션	
+----------------------------
 
 #### 1) SH 부하 수행 
 
@@ -555,6 +797,7 @@ date; $SB_HOME/bin/charbench -uc  200  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -
 >6. -wc 
 
 ### C. 혼합 트랜잭션
+------------------------------
 
 #### 1) SOE / SH 혼합 수행 
 
@@ -578,13 +821,15 @@ date; $SB_HOME/bin/charbench -uc  100  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -
 -------------------------------------------------------------------------------------------------------------------
 
 ## 4. 최대부하테스트 <a id="ch-3-4"></a>
+--------------------------
 이전 테스트 확인해서 VU 수 조절해서 실행
 
 -------------------------------------------------------------------------------------------------------------------
 
-## 5. In Memory DB	  <a id="ch-3-5"></a>
+## 5. In Memory DB  <a id="ch-3-5"></a>
+-------------------------
 
-### A. Oracle In Memory Base Level 활성화 
+#### Oracle In Memory Base Level 활성화 
 
 Oracle In Memory Base Level 설정으로 Instance 당 16GB 무료로 사용가능 
 
@@ -741,6 +986,7 @@ SQL> select * from v$inmemory_area;
 ```
 
 ### A. In Memory Column Store Population 		
+-------------------------------------------------------
 
 #### in memory advisor script 활용 
 In Memory Advisor 에서 추천한 Object 확인후 population
@@ -752,6 +998,7 @@ ALTER TABLE "SH1"."CUSTOMERS" INMEMORY MEMCOMPRESS FOR QUERY LOW;
 ALTER TABLE "SH1"."SALES" INMEMORY MEMCOMPRESS FOR QUERY LOW;
 ALTER TABLE "SH1"."TIMES" INMEMORY MEMCOMPRESS FOR QUERY LOW;
 ```
+
 ```sql
 SQL> @imadvisor_my_task1.sql
 
@@ -816,6 +1063,7 @@ SQL> exec dbms_stats.gather_schema_stats(ownname=>'SH1',estimate_percent=>100,de
 ```
 
 ### B. 질의 성능		
+-------------------------
 
 #### DB 부하테스트 전 shared pool 초기화 
 ```sql
@@ -832,9 +1080,11 @@ date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -
 -------------------------------------------------------------------------------------------------------------------
 
 ## 6. 데이터 암호화/질의   <a id="ch-3-6"></a>
+-------------------------------
 SH10 테이블스페이스를 암호화테이블스페이스로 전화 
 
 ### A. 테이블스페이스 암호화  
+------------------------------------
 
 #### 1) TDE 적용 절차
 
@@ -982,6 +1232,7 @@ EOF
 ```
 
 ### B. 암호화 테이블  질의  
+----------------------------------
 
 A-7 또는 A-8 로 암호화 테이블스페이스에 있는 테이블 질의 
 
@@ -994,7 +1245,8 @@ date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -
 date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -min   0  -max   0 -stats full   -u soe10    -p soe10   -r soe_scale10_50user_tde_$(date +"%Y%m%d").xml    -c ../configs/SOE_Server_Side_V2.xml -f -dbap oracle -dbau "sys as sysdba" -cs //racnode-scan/orclpdb -cpuuser oracle -cpupass oracle -cpuloc racnode1 -v  users,tpm,tps,cpu ; date
 ```
 
-### C. 비암호화/암호화 데이타 파일 확인 
+### 참고  비암호화/암호화 데이타 파일 확인 
+------------------------------------------------
 
 #### 1). 일반 및 암호화된 테이블스페이스 생성
 
@@ -1063,7 +1315,7 @@ simpson
 francisco.simpson@virgin.com
 simpson
 francisco.simpson@comcast.com
-...
+
 [grid@racnode1 ~]$ echo $?
 0
 [grid@racnode1 ~]$ strings SOE10_TDE_TS.pdf |grep 'simpson'
@@ -1075,8 +1327,10 @@ francisco.simpson@comcast.com
 -------------------------------------------------------------------------------------------------------------------
 
 ## 7. 데이터 압축/질의 <a id="ch-3-7"></a>
+-----------------------------
 
 ### A. 테이블 압축 	
+--------------------------
 
 #### 1) 압축전 테이블 정보 확인
 ```bash
@@ -1119,6 +1373,7 @@ Compression Ratio
 ```
 
 ### B. 압축 테이블  질의	
+----------------------------------
 
 ```bash
 cd /home/oracle/swingbench/x86
@@ -1127,9 +1382,11 @@ date; $SB_HOME/bin/charbench -uc   50  -rt  00:05 -bs 00:01 -be 00:04 -ld  50  -
 
 -------------------------------------------------------------------------------------------------------------------
 
-## 8. 백업    <a id="ch-3-4"></a>
+## 8. 백업  테스트  <a id="ch-3-4"></a>
+----------------------
 
 ### A. RMAN 백업 성능 테스트 
+----------------------------------------
 
 #### 1). RMAN Online 백업 사전 요구사항 
 Archive log 모드에서만 RMAN Online 백업이 가능
@@ -1178,6 +1435,7 @@ System altered.
 
 SQL> exit
 ```
+
 * 데이타베이스 재시작 
 ```bash
 [oracle@racnode1 backup]$ srvctl stop database -d ORCL
@@ -1298,6 +1556,7 @@ release channel ch2;
 ```
 
 ### B. DataPump 백업
+-----------------------------
 
 #### 1) DataPump 백업관리를 위한 디렉토리 생성
 
@@ -1339,6 +1598,7 @@ $ expdp system@orclpdb parfile=schema.par
 ```
 
 ### C. DataPump 네트워크 백업
+---------------------------------------
 
 #### NETWORK_LINK 
 
@@ -1346,40 +1606,48 @@ $ expdp system@orclpdb parfile=schema.par
 grant exp_full_database to sh10 ; 
 
 DB LINK(Source Database)로 부터 엑스포트
-expdp hoya@orclpdb directory=EXPDIR network_link=DB_LINK_SALES dumpfile=network_export.dmp NOLOGFILE=yes
+expdp sh10@orclpdb directory=EXPDIR network_link=DB_LINK_SALES dumpfile=network_export.dmp NOLOGFILE=yes
 
 network_link 파라미터 용 tns 및 db 링크 설정(19c)
 
 ##############################################################################
 
 # 라. 가용성 / 안정성
+--------------------------
 		
-## 1.클러스터 장애 대처 기능	<a id="ch-4-1"></a>
+## 1. 클러스터 장애 대처 기능	<a id="ch-4-1"></a>
+-----------------------------------
 
 ### A. Node 장애
+----------------------
 
 ### B. Network 장애
+---------------------------
 
 ### C. DBMS Process 장애
+----------------------------------
 
 -------------------------------------------------------------------------------------------------------------------
 
-## 2.장시간 운영   <a id="ch-4-1"></a>
+## 2. 장시간 운영   <a id="ch-4-1"></a>
+-----------------------
 
 고정부하로 운영	
 
 ##############################################################################
 
 # 마. 부하테스트 결과 수집  
-
+----------------------------------
 
 ## 1. 부하용 VM (리포트 겸용)<a id="ch-5-1"></a>
-
+-----------------------------------
 
 ### A. 플랫폼 별 결과 디렉토리 준비 ( Unix, X86 )
-
+---------------------------------------------------------
 
 ### B. Swingbench 자료 
+------------------------------
+
 ```bash
 $SWINGBENCH_HOME/x86
 $SWINGBENCH_HOME/unix
@@ -1407,6 +1675,8 @@ DB 노드별로 리포트 서버로 복사해옴
 -------------------------------------------------------------------------------------------------------------------
 
 ## 2. DB 노드의 AWR 자료 수집 <a id="ch-5-2"></a>
+---------------------------------------
+
 각 DB Node 들에서 취합됨 
 
 ### A. Visual-AWR script 설명 
@@ -1416,6 +1686,7 @@ visual-awr/assets/mkawrscript.sql
 visual-awr/assets/getawr.sql
 ```
 ### B. AWR 정보 취득
+-----------------------------
 
 #### 1) AWR snapshot 정보 취득
 DBA 권한으로 CDB 에 접속
@@ -1476,10 +1747,13 @@ Visual-AWR 분석을 위해 input 디렉토리 밑에 서버별로 저장
 ##############################################################################
 
 # 사. Appendix 
+------------------------
 
 ## 1. 환경변수 <a id="ch-7-1"></a>
+-------------------
 
 ### A. DB 노드용 .bash_profile
+-------------------------------------
 
 #### 1) oracle 계정 .bash_profile 일부
 ```bash
@@ -1586,6 +1860,8 @@ export CLASSPATH=$ORACLE_HOME/JRE:$ORACLE_HOME/jlib:$ORACLE_HOME/rdbms/jlib
 ```
 
 ### B. 부하용VM  .bash_profile
+----------------------------------------
+
 ```bash
 # User specific aliases and functions
 export ORACLE_BASE=/u01/app/oracle
@@ -1606,8 +1882,10 @@ export SB_HOME=/home/oracle/swingbench
 -------------------------------------------------------------------------------------------------------------------
 
 ## 2. SSH User Equivalence Configuration <a id="ch-7-2"></a>
+--------------------------------------------------
 
 ### A. Manual Key-Based Authentication 
+--------------------------------------------------
 
 #### 1) Node1번 / 2번 ssh key 생성
 ```bash
@@ -1648,6 +1926,7 @@ $ ./sshUserSetup.sh
 -------------------------------------------------------------------------------------------------------------------
 
 ## 3. 일반 사용자로 sudo 사용 ( 패스워드없이 )<a id="ch-7-3"></a>
+-------------------------------------------------------
 
 ```bash
 vi /etc/sudoers
@@ -1659,6 +1938,7 @@ oracle       ALL=(ALL)       NOPASSWD: ALL
 -------------------------------------------------------------------------------------------------------------------
 
 ## 4. Oracle Linux 7에서 로컬 yum repository 설정<a id="ch-7-4"></a>
+----------------------------------------------------------
 * 관리원은 DB 서버에서 outbound network 차단
 
 #### 1) DVD 또는 ISO 를 마운트 
@@ -1702,9 +1982,12 @@ gpgcheck=0
 -------------------------------------------------------------------------------------------------------------------
 
 ## 5. HammerDB 부하테스트<a id="ch-7-5"></a>
+----------------------------------
+
 * Swingbench 또는 HammerDB 로 Oracle DB 부하 테스트
 
 ### A. HammerDB 사전 준비 
+----------------------------------
 
 #### 1). oracle.xml 설정 파일 준비 
 ```bash
@@ -1754,6 +2037,7 @@ The xml is well-formed, applying configuration
 hammerdb>source ora_tpcc_schemabuild.tcl
 
 ### B. HammerDB TPROC-C 부하 테스트 수행 
+-----------------------------------------------------------
 
 #### 1) TPROC-C 용 부하테스트 Script 예
 ```bash
@@ -1867,6 +2151,7 @@ hammerdb>
 -------------------------------------------------------------------------------------------------------------------
 
 ## 6. ODA X8-2 HA 의 Database Shape 별 성능 수치 자료<a id="ch-7-6"></a>
+-------------------------------------------------------------------
 이 자료를 ODA X8-2 HA 장비의 BMT 성능 결과로 활용하면 안되며 ( **BMT 결과 아님** )  ODA X8-2 HA 장비에서 제공하는 
 Database Template 의 Shape 에 따른 Swingbench 결과 값 비교 와 Shape 확장에 따른 성능 확장성을 참고하는 자료입니다.
 [ODA X82HA 의 Database Shape 별 성능 수치 자료](https://www.oracle.com/a/ocom/docs/engineered-systems/database-appliance/oda-x82ha-perf-wp-5972834.pdf)
